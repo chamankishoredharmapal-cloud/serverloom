@@ -1,0 +1,43 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Employees{% endblock %}
+{% block header %}Employees{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <form method="GET" class="flex items-center gap-2">
+    <input name="q" value="{{ q }}" placeholder="Search name or phone"
+           class="border p-2 rounded" />
+    <button class="bg-indigo-600 text-white px-3 py-2 rounded">Search</button>
+  </form>
+
+  <a href="{% url 'admin_saree_entry' %}" class="bg-green-600 text-white px-3 py-2 rounded">Add Saree</a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  {% for e in employees %}
+  <div class="bg-white p-4 shadow rounded">
+    <div class="flex justify-between items-start">
+      <div>
+        <h3 class="font-semibold">{{ e.name }}</h3>
+        <p class="text-sm text-gray-600">{{ e.phone }}</p>
+      </div>
+      <div class="text-right">
+        {% if e.is_approved %}
+          <span class="text-sm text-green-600 font-semibold">Approved</span>
+        {% else %}
+          <span class="text-sm text-yellow-600 font-semibold">Pending</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-4 flex gap-2">
+      <a href="{% url 'admin_employee_detail' e.id %}" class="px-3 py-1 bg-blue-600 text-white rounded">View</a>
+      <a href="{% url 'admin_approve_employee' e.id %}" class="px-3 py-1 bg-green-600 text-white rounded">Approve</a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="bg-white p-4 shadow rounded">No employees found.</div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,205 @@
+<!-- templates/accounts/admin/admin_employee_detail.html -->
+{% extends "base_admin.html" %}
+{% block title %}Employee Detail{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 space-y-6">
+
+  <!-- Employee Header -->
+  <div class="bg-white rounded shadow p-6 flex justify-between items-center">
+    <div>
+      <h2 class="text-2xl font-semibold">{{ employee.name }}</h2>
+      <div class="text-sm text-gray-500">{{ employee.phone }}</div>
+    </div>
+    <div class="text-right">
+      <div class="text-sm text-gray-500">Salary per saree</div>
+      <div class="text-lg font-semibold">₹{{ employee.salary_per_saree }}</div>
+    </div>
+  </div>
+
+  <!-- Weekly Saree Entries -->
+  <div class="bg-white rounded shadow p-6">
+    <h3 class="font-semibold mb-4 text-lg">Weekly Saree Entries <span class="text-sm text-gray-500">({{ week_start|date:'M d, Y' }} — {{ week_end|date:'M d, Y' }})</span></h3>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-3 text-left text-sm text-gray-600">Date</th>
+            <th class="p-3 text-left text-sm text-gray-600">Count</th>
+            <th class="p-3 text-left text-sm text-gray-600">Notes</th>
+            <th class="p-3 text-left text-sm text-gray-600">Salary Earned</th>
+            <th class="p-3 text-left text-sm text-gray-600">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="bg-white divide-y">
+          {% for e in weekly_entries %}
+          <tr>
+            <td class="p-3 text-sm">{{ e.date|date:"M d, Y" }}</td>
+            <td class="p-3 text-sm">{{ e.count }}</td>
+            <td class="p-3 text-sm">{{ e.notes|default:"—" }}</td>
+            <td class="p-3 text-sm">₹{{ e.salary }}</td>
+
+            <td class="p-3 text-sm space-x-2">
+              <!-- Delete entry -->
+              <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_saree">
+                <input type="hidden" name="entry_id" value="{{ e.id }}">
+                <button class="px-2 py-1 bg-red-600 text-white rounded text-xs" onclick="return confirm('Delete this entry?');">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td class="p-3 text-center text-gray-500" colspan="5">No entries this week.</td></tr>
+          {% endfor %}
+        </tbody>
+
+        <tfoot class="bg-gray-50 border-t">
+          <tr class="font-semibold">
+            <td class="p-3">Totals</td>
+            <td class="p-3">{{ weekly_sarees }}</td>
+            <td class="p-3">—</td>
+            <td class="p-3">₹{{ weekly_salary_before }}</td>
+            <td></td>
+          </tr>
+
+          <tr class="font-medium">
+            <td class="p-3">Advance</td>
+            <td class="p-3" colspan="4">
+              <div class="flex items-center space-x-3">
+                <span class="font-semibold text-gray-800">₹{{ employee.advance_salary }}</span>
+
+                <form method="post" action="{% url 'give_advance' employee.id %}" class="flex items-center space-x-2">
+                  {% csrf_token %}
+                  <input type="number" name="amount" min="1" placeholder="₹" class="w-20 border rounded px-2 py-1" required>
+                  <button class="bg-green-600 text-white px-3 py-1 rounded">Give</button>
+                </form>
+
+                <form method="post" action="{% url 'clear_advance' employee.id %}">
+                  {% csrf_token %}
+                  <button class="bg-red-600 text-white px-3 py-1 rounded">Clear</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="font-bold">
+            <td class="p-3">Final Salary</td>
+            <td class="p-3" colspan="4">₹{{ week_salary }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add Saree Entry (admin-only form) -->
+  <div class="bg-white rounded shadow p-6">
+    <h3 class="font-semibold text-lg mb-4">Add Saree Entry (Admin)</h3>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_saree">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="text-sm text-gray-600">Date</label>
+          <input type="date" name="date" required class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Count</label>
+          <input type="number" name="count" min="0" required class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Notes</label>
+          <input type="text" name="notes" class="w-full border rounded px-3 py-2">
+        </div>
+      </div>
+      <div class="mt-3">
+        <button class="bg-green-600 text-white px-4 py-2 rounded">Save Entry</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Full Histories -->
+  <div class="bg-white rounded shadow p-6">
+    <h3 class="font-semibold mb-4">Full Histories</h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="font-semibold mb-2">Saree History</h4>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50"><tr><th class="p-2">Date</th><th class="p-2">Count</th><th class="p-2">Notes</th></tr></thead>
+            <tbody>
+              {% for s in saree_history_full %}
+              <tr class="border-t"><td class="p-2">{{ s.date|date:"M d, Y" }}</td><td class="p-2">{{ s.count }}</td><td class="p-2">{{ s.notes }}</td></tr>
+              {% empty %}
+              <tr><td class="p-2" colspan="3">No saree history.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-2">Pagdi History</h4>
+        <ul class="space-y-2">
+          {% for p in pagdi_history_full %}
+          <li class="border p-2 rounded">
+            <div><strong>Start:</strong> {{ p.start_date|date:"M d, Y" }}</div>
+            <div><strong>End:</strong> {{ p.end_date|default:"Active" }}</div>
+            <div class="text-sm text-gray-600">{{ p.notes }}</div>
+          </li>
+          {% empty %}
+          <li>No pagdi history.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-2">Warp History</h4>
+        <ul class="space-y-2">
+          {% for w in warp_history_full %}
+          <li class="border p-2 rounded">
+            <div><strong>Start:</strong> {{ w.start_date|date:"M d, Y" }}</div>
+            <div><strong>End:</strong> {{ w.end_date|default:"Active" }}</div>
+            <div class="text-sm text-gray-600">{{ w.notes }}</div>
+          </li>
+          {% empty %}
+          <li>No warp history.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-2">Salary History</h4>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="p-2">Week</th><th class="p-2">Sarees</th><th class="p-2">Rate</th><th class="p-2">Advance</th><th class="p-2">Final</th><th class="p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in salary_history_full %}
+              <tr class="border-t">
+                <td class="p-2">{{ h.week_start|date:"M d, Y" }} — {{ h.week_end|date:"M d, Y" }}</td>
+                <td class="p-2">{{ h.sarees }}</td>
+                <td class="p-2">₹{{ h.salary_rate }}</td>
+                <td class="p-2">₹{{ h.advance_salary }}</td>
+                <td class="p-2">₹{{ h.final_salary }}</td>
+                <td class="p-2">{% if h.paid_status %}<span class="text-green-700">Paid</span>{% else %}<span class="text-yellow-600">Unpaid</span>{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr><td class="p-2" colspan="6">No salary history.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

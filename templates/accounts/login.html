@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | Loom Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen flex items-center justify-center bg-gray-100">
+
+<div class="bg-white shadow-xl rounded-xl p-8 w-full max-w-md">
+
+    <h2 class="text-3xl font-bold text-center mb-6">Welcome Back</h2>
+
+    {% if error %}
+    <div class="mb-4 p-3 rounded bg-red-100 text-red-700 border border-red-300">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label class="font-semibold">Phone Number</label>
+            <input type="text" name="phone"
+                   class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400"
+                   placeholder="Enter phone number" required>
+        </div>
+
+        <div>
+            <label class="font-semibold">Password</label>
+            <input type="password" name="password"
+                   class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400"
+                   placeholder="Enter password" required>
+        </div>
+
+        <button class="w-full bg-blue-600 text-white py-2 rounded mt-2 hover:bg-blue-700">
+            Login
+        </button>
+    </form>
+
+    <p class="text-center mt-4 text-sm">
+        Don't have an account?
+        <a href="/signup/" class="text-blue-600 underline">Create Account</a>
+    </p>
+
+</div>
+
+</body>
+</html>

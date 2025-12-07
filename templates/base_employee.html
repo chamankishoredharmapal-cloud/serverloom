@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{% block title %}Employee Panel{% endblock %}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind fallback -->
+    <script>
+        (function(){
+            function cssLoaded(){
+                try {
+                    const t = document.createElement('div');
+                    t.className = 'hidden sm:block';
+                    document.documentElement.appendChild(t);
+                    const cs = getComputedStyle(t);
+                    document.documentElement.removeChild(t);
+                    return cs.display === 'none';
+                } catch(e){ return true; }
+            }
+            if(!cssLoaded()){
+                const l = document.createElement('link');
+                l.rel = 'stylesheet';
+                l.href = '/static/css/tailwind-fallback.css';
+                document.head.appendChild(l);
+            }
+        })();
+    </script>
+
+    {% load static %}
+</head>
+
+<body class="bg-slate-50 text-slate-900">
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar"
+           class="w-64 bg-indigo-700 text-white flex flex-col fixed inset-y-0 left-0 z-30 shadow-xl transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative"
+           role="navigation" aria-label="Employee Sidebar">
+
+        <div class="h-20 flex items-center px-6 font-bold text-xl border-b border-indigo-600 bg-indigo-800">
+            🧵 Employee Panel
+        </div>
+
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+
+            <a href="{% url 'employee_dashboard' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Dashboard</a>
+
+            <a href="{% url 'saree_count' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Saree Count</a>
+
+            <a href="{% url 'pagdi' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Pagdi</a>
+
+            <a href="{% url 'warp' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Warp</a>
+
+            <a href="{% url 'employee_history' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">History</a>
+
+            <a href="{% url 'employee_salary_history' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Salary History</a>
+
+            <a href="{% url 'logout' %}"
+               class="block px-4 py-2 bg-red-700/80 hover:bg-red-700 rounded-md">Logout</a>
+
+        </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 ml-0 md:ml-64 flex flex-col h-screen overflow-hidden bg-slate-50">
+
+        <!-- MOBILE HEADER -->
+        <div class="md:hidden flex items-center justify-between bg-white border-b p-3">
+            <button id="sidebarToggle"
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                    class="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+
+            <div class="font-semibold">Employee Portal</div>
+            <div></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 md:p-10">
+
+            <!-- TOASTS -->
+            {% if messages %}
+            <div class="mb-6 space-y-2" aria-live="polite" role="status">
+                {% for m in messages %}
+                <div class="p-4 rounded-lg shadow-sm border-l-4 flex items-center justify-between
+                    {% if m.tags == 'success' %}bg-green-50 border-green-500 text-green-700
+                    {% elif m.tags == 'error' %}bg-red-50 border-red-500 text-red-700
+                    {% else %}bg-blue-50 border-blue-500 text-blue-700{% endif %}"
+                     role="alert">
+                    <span>{{ m }}</span>
+                    <button type="button"
+                            class="text-xl font-bold leading-none focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            aria-label="Dismiss"
+                            onclick="this.closest('[role=alert]').remove()">
+                        &times;
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+<!-- Sidebar Script -->
+<script>
+(function(){
+    const btn = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    if(!btn || !sidebar) return;
+
+    function openSidebar(){
+        sidebar.classList.remove('-translate-x-full');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+    function closeSidebar(){
+        sidebar.classList.add('-translate-x-full');
+        btn.setAttribute('aria-expanded', 'false');
+    }
+
+    btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        expanded ? closeSidebar() : openSidebar();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true'){
+            closeSidebar();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

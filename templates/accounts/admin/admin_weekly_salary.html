@@ -1,0 +1,86 @@
+{% extends "base_admin.html" %}
+{% load static %}
+{% block title %}Weekly Salary{% endblock %}
+
+{% block content %}
+<!-- Tailwind CDN if your base doesn't include it -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<div class="max-w-6xl mx-auto p-6">
+  <div class="bg-white shadow rounded p-6 mb-6">
+    <h2 class="text-2xl font-semibold">Weekly Salary</h2>
+    <p class="text-sm text-gray-600 mt-2">Week: <strong>{{ week_start|date:"M d, Y" }}</strong> — <strong>{{ week_end|date:"M d, Y" }}</strong></p>
+  </div>
+
+  <div class="space-y-4">
+    {% for row in rows %}
+    <div class="bg-white rounded shadow-md p-4 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 flex items-center justify-center bg-gray-100 rounded text-lg font-semibold text-gray-700">
+          {{ row.employee.name|slice:":1"|upper }}
+        </div>
+
+        <div>
+          <div class="font-semibold text-lg">{{ row.employee.name }}</div>
+          <div class="text-xs text-gray-500">{{ row.employee.phone }}</div>
+        </div>
+      </div>
+
+      <div class="flex-1 px-6 flex items-center justify-between">
+        <div class="text-center">
+          <div class="text-sm text-gray-500">Sarees</div>
+          <div class="font-medium text-lg">{{ row.sarees }}</div>
+        </div>
+
+        <div class="text-center">
+          <div class="text-sm text-gray-500">Before Advance</div>
+          <div class="font-medium">₹{{ row.salary_before }}</div>
+        </div>
+
+        <div class="text-center">
+          <div class="text-sm text-gray-500">Advance</div>
+          <div class="font-medium">₹{{ row.advance }}</div>
+        </div>
+
+        <div class="text-center">
+          <div class="text-sm text-gray-500">Final</div>
+          <div class="text-2xl font-semibold">₹{{ row.final_salary }}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <!-- Give advance button triggers a small inline form via JS fallback, but we provide a simple inline form -->
+        <form method="post" action="{% url 'give_advance' row.employee.id %}" class="flex items-center space-x-2">
+          {% csrf_token %}
+          <input name="amount" type="number" min="1" placeholder="₹" class="w-20 border rounded px-2 py-1" required>
+          <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Give</button>
+        </form>
+
+        <!-- Clear advance -->
+        <form method="post" action="{% url 'clear_advance' row.employee.id %}">
+          {% csrf_token %}
+          <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Clear</button>
+        </form>
+
+        <!-- Paid toggle -->
+        {% if row.paid %}
+        <form method="post" action="{% url 'mark_unpaid' row.employee.id %}">
+          {% csrf_token %}
+          <button class="bg-gray-700 text-white px-3 py-1 rounded">Paid — Set Unpaid</button>
+        </form>
+        {% else %}
+        <form method="post" action="{% url 'mark_paid' row.employee.id %}" class="flex items-center space-x-2">
+          {% csrf_token %}
+          <input type="text" name="note" placeholder="Note (optional)" class="border rounded px-2 py-1 w-36">
+          <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Mark Paid</button>
+        </form>
+        {% endif %}
+
+        <a href="{% url 'salary_slip_pdf' row.employee.id %}" class="bg-indigo-600 text-white px-3 py-1 rounded">Slip</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

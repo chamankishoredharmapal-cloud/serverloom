@@ -1,0 +1,52 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Salary History</h1>
+
+<div class="flex justify-end mb-4">
+    <a href="{% url 'download_global_weekly_salary' %}"
+       class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">
+       📥 Download Global Weekly Salary
+    </a>
+</div>
+
+
+<table class="min-w-full bg-white shadow rounded">
+    <thead>
+        <tr class="border-b">
+            <th class="p-3 text-left">Employee</th>
+            <th class="p-3 text-left">Week</th>
+            <th class="p-3 text-left">Sarees</th>
+            <th class="p-3 text-left">Rate</th>
+            <th class="p-3 text-left">Advance</th>
+            <th class="p-3 text-left">Final</th>
+            <th class="p-3 text-left">Paid?</th>
+            <th class="p-3 text-left">Notes</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for row in history %}
+        <tr class="border-b hover:bg-gray-50">
+            <td class="p-3">{{ row.employee.name }}</td>
+            <td class="p-3">{{ row.week_start }} — {{ row.week_end }}</td>
+            <td class="p-3">{{ row.sarees }}</td>
+            <td class="p-3">{{ row.salary_rate }}</td>
+            <td class="p-3">{{ row.advance_salary }}</td>
+            <td class="p-3">{{ row.final_salary }}</td>
+            <td class="p-3">
+                {% if row.paid_status %}
+                    <span class="text-green-600 font-semibold">Yes</span>
+                {% else %}
+                    <span class="text-red-600 font-semibold">No</span>
+                {% endif %}
+            </td>
+            <td class="p-3">{{ row.notes }}</td>
+        </tr>
+        {% empty %}
+        <tr><td class="p-3" colspan="8" class="text-center">No salary history found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

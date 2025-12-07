@@ -1,0 +1,57 @@
+<!-- templates/accounts/history.html -->
+{% extends "base_employee.html" %}
+{% block title %}Your History{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">📚 Your Activity History</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+  <div class="bg-white p-4 rounded shadow">
+    <h3 class="font-semibold mb-3">Saree History</h3>
+    <ul>
+      {% for s in saree_history %}
+      <li class="border p-2 mb-2 rounded">
+        <strong>{{ s.date|date:"M d, Y" }}</strong> — {{ s.count }} sarees<br>
+        <span class="text-sm text-gray-600">{{ s.notes }}</span>
+      </li>
+      {% empty %}
+      <p>No saree history yet.</p>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="space-y-6">
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-3">Pagdi History</h3>
+      <ul>
+        {% for p in pagdi_history %}
+        <li class="border p-2 mb-2 rounded">
+          <strong>{{ p.start_date|date:"M d, Y" }}</strong> — {{ p.end_date|default:"Active" }}<br>
+          Capacity: {{ p.capacity_sarees }}<br>
+          <span class="text-sm text-gray-600">{{ p.notes }}</span>
+        </li>
+        {% empty %}
+        <p>No pagdi history.</p>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-3">Warp History</h3>
+      <ul>
+        {% for w in warp_history %}
+        <li class="border p-2 mb-2 rounded">
+          <strong>{{ w.start_date|date:"M d, Y" }}</strong> — {{ w.end_date|default:"Active" }}<br>
+          Capacity: {{ w.capacity_sarees }}<br>
+          <span class="text-sm text-gray-600">{{ w.notes }}</span>
+        </li>
+        {% empty %}
+        <p>No warp history.</p>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

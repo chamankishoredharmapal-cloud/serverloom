@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: loomserver
+    env: python
+    repo: https://github.com/YOUR_USERNAME/YOUR_REPO
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn loomserver.wsgi --log-file -"
+    envVars:
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: USE_CLOUDINARY
+        value: True
+      - key: DJANGO_SETTINGS_MODULE
+        value: loomserver.settings
+
+databases:
+  - name: loom-postgres
+    plan: free

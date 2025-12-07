@@ -1,0 +1,35 @@
+<!-- templates/accounts/saree_count.html -->
+{% extends "base_employee.html" %}
+{% block title %}Saree Count{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
+  <h2 class="text-2xl font-semibold mb-4">Your Saree Entries (Read-only)</h2>
+  <p class="text-sm text-gray-600 mb-4">Only admins can add or edit saree entries.</p>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="p-3 text-left">Date</th>
+          <th class="p-3 text-left">Count</th>
+          <th class="p-3 text-left">Notes</th>
+          <th class="p-3 text-left">Salary Earned</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in history %}
+        <tr class="border-t">
+          <td class="p-3">{{ h.date|date:"M d, Y" }}</td>
+          <td class="p-3">{{ h.count }}</td>
+          <td class="p-3">{{ h.notes|default:"—" }}</td>
+          <td class="p-3 font-semibold">₹{{ h.salary }}</td>
+        </tr>
+        {% empty %}
+        <tr><td class="p-3" colspan="4">No entries yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

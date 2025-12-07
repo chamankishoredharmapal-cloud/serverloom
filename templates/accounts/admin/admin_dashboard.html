@@ -1,0 +1,25 @@
+{% extends "base_admin.html" %}
+{% block content %}
+
+<h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-2">Total Employees</h2>
+        <p class="text-3xl font-bold text-blue-600">{{ total_employees }}</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-2">Active Pagdis</h2>
+        <p class="text-3xl font-bold text-green-600">{{ active_pagdis }}</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-2">Warps Running</h2>
+        <p class="text-3xl font-bold text-indigo-600">{{ active_warps }}</p>
+    </div>
+
+</div>
+
+{% endblock %}
