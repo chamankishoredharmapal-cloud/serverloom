@@ -1,7 +1,17 @@
 services:
   - type: web
-    name: serverloom
+    name: loomserver
     env: python
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn loomserver.wsgi:application"
-    runtime: "python-3.12.4"
+    startCommand: "gunicorn loomserver.wsgi"
+    envVars:
+      SECRET_KEY:
+        generate: true
+      DATABASE_URL:
+        fromDatabase:
+          name: loom-db
+          property: connectionString
+
+databases:
+  - name: loom-db
+    plan: free
