@@ -1,15 +1,14 @@
 """
 WSGI config for loomserver project.
 """
-
 import os
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'loomserver.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "loomserver.settings")
 
 application = get_wsgi_application()
 
-# Auto-create admin safely
+# Safely auto-create admin
 try:
     from .create_admin import create_default_superuser
     create_default_superuser()
