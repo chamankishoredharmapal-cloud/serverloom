@@ -7,6 +7,6 @@ reportlab==4.1.0
 dj-database-url==1.2.0
 whitenoise==6.6.0
 cloudinary==1.36.0
-django-cloudinary-storage==0.4.0
+django-cloudinary-storage
 python-dotenv==1.0.0
 
