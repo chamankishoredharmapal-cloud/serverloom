@@ -5,10 +5,10 @@ from django.http import HttpResponse
 urlpatterns = [
     # Home route
     path('', lambda request: HttpResponse("Server Loom backend is running!")),
-
-    # Your app routes
+    
+    # App routes
     path('accounts/', include('accounts.urls')),
 
-    # Admin route
+    # Admin
     path('admin/', admin.site.urls),
 ]
