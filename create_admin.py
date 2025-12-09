@@ -1,5 +1,3 @@
-# loomserver/create_admin.py
-
 from django.contrib.auth import get_user_model
 from django.db.utils import OperationalError
 
@@ -10,7 +8,7 @@ def create_default_superuser():
             User.objects.create_superuser(
                 "admin",
                 "admin@example.com",
-                "admin123",
+                "admin123"
             )
             print("✔ Auto-created superuser (admin)")
         else:
