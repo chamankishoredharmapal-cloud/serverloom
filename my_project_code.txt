@@ -1,0 +1,3706 @@
+
+==================================================
+FILE START: requirements.txt
+==================================================
+Django==5.2.8
+gunicorn==21.2.0
+dj-database-url==1.2.0
+whitenoise==6.6.0
+cloudinary==1.36.0
+django-cloudinary-storage==0.3.0
+python-dotenv==1.0.0
+Pillow==10.2.0
+reportlab==4.1.0
+openpyxl==3.1.2
+FILE END: requirements.txt
+
+==================================================
+FILE START: manage.py
+==================================================
+#!/usr/bin/env python
+"""Django's command-line utility for administrative tasks."""
+import os
+import sys
+
+
+def main():
+    """Run administrative tasks."""
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'loomserver.settings')
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and "
+            "available on your PYTHONPATH environment variable? Did you "
+            "forget to activate a virtual environment?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == '__main__':
+    main()
+
+FILE END: manage.py
+
+==================================================
+FILE START: templates\base_admin.html
+==================================================
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{% block title %}Loom Admin Panel{% endblock %}</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind fail-safe (loads fallback if CDN fails) -->
+    <script>
+        (function(){
+            function cssLoaded(){
+                try {
+                    const t = document.createElement('div');
+                    t.className = 'hidden sm:block';
+                    document.documentElement.appendChild(t);
+                    const cs = getComputedStyle(t);
+                    document.documentElement.removeChild(t);
+                    return cs.display === 'none';
+                } catch(e){ return true; }
+            }
+            if(!cssLoaded()){
+                const l = document.createElement('link');
+                l.rel = 'stylesheet';
+                l.href = '/static/css/tailwind-fallback.css';
+                document.head.appendChild(l);
+            }
+        })();
+    </script>
+
+    {% load static %}
+</head>
+
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar"
+           class="w-64 bg-slate-900 text-white flex flex-col fixed inset-y-0 left-0 z-30 transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative shadow-xl"
+           role="navigation" aria-label="Admin Sidebar">
+
+        <div class="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-950">
+            <a href="{% url 'admin_home' %}"
+               class="flex items-center gap-3 font-bold text-xl tracking-wide text-indigo-400 hover:text-indigo-300 transition">
+                🧵 Loom Admin
+            </a>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto no-scrollbar py-4 px-3 space-y-1" tabindex="0">
+
+            <a href="{% url 'admin_home' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Dashboard</a>
+
+            <a href="{% url 'admin_employees' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Employees</a>
+
+            <a href="{% url 'admin_pagdi_list' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Pagdi</a>
+
+            <a href="{% url 'admin_warp_list' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Warp</a>
+
+            <a href="{% url 'admin_saree_entry' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Saree Entry</a>
+
+            <a href="{% url 'admin_weekly_salary' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Weekly Salary</a>
+
+            <a href="{% url 'admin_salary_history' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Salary History</a>
+
+            <a href="{% url 'download_global_history' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Download Global History</a>
+
+            <a href="{% url 'logout' %}"
+               class="block px-4 py-2 rounded-md bg-red-700/60 hover:bg-red-700">Logout</a>
+
+        </nav>
+
+    </aside>
+
+    <!-- MAIN AREA -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+
+        <!-- HEADER -->
+        <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-8 shadow-sm z-20" role="banner">
+
+            <!-- Mobile hamburger -->
+            <button id="sidebarToggle"
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                    class="p-2 rounded-md md:hidden focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+
+            <h2 class="text-2xl font-bold text-slate-800 hidden md:block">{% block header %}{% endblock %}</h2>
+
+            <div class="text-sm font-medium text-slate-500">
+                {% block header_right %}{% endblock %}
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <main class="flex-1 overflow-y-auto p-6 md:p-8">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<!-- TOAST MESSAGES -->
+{% if messages %}
+<div class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full"
+     aria-live="polite" aria-atomic="true" role="status">
+    {% for m in messages %}
+    <div class="animate-fade-in-down flex items-center p-4 rounded-lg shadow-lg border-l-4
+         {% if m.tags == 'success' %}bg-white border-green-500 text-green-700
+         {% elif m.tags == 'error' %}bg-white border-red-500 text-red-700
+         {% else %}bg-white border-blue-500 text-blue-700{% endif %}"
+         role="alert">
+
+        <div class="flex-1 text-sm font-medium">{{ m }}</div>
+
+        <button type="button"
+                class="ml-3 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded"
+                aria-label="Dismiss notification"
+                onclick="this.closest('[role=alert]').remove()">
+            &times;
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Animations -->
+<style>
+@keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down {
+    animation: fadeInDown 0.3s ease-out forwards;
+}
+</style>
+
+<!-- Sidebar Toggle Script -->
+<script>
+(function(){
+    const btn = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    if(!btn || !sidebar) return;
+
+    function openSidebar(){
+        sidebar.classList.remove('-translate-x-full');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+    function closeSidebar(){
+        sidebar.classList.add('-translate-x-full');
+        btn.setAttribute('aria-expanded', 'false');
+    }
+
+    btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        expanded ? closeSidebar() : openSidebar();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true'){
+            closeSidebar();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>
+
+FILE END: templates\base_admin.html
+
+==================================================
+FILE START: templates\base_employee.html
+==================================================
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{% block title %}Employee Panel{% endblock %}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind fallback -->
+    <script>
+        (function(){
+            function cssLoaded(){
+                try {
+                    const t = document.createElement('div');
+                    t.className = 'hidden sm:block';
+                    document.documentElement.appendChild(t);
+                    const cs = getComputedStyle(t);
+                    document.documentElement.removeChild(t);
+                    return cs.display === 'none';
+                } catch(e){ return true; }
+            }
+            if(!cssLoaded()){
+                const l = document.createElement('link');
+                l.rel = 'stylesheet';
+                l.href = '/static/css/tailwind-fallback.css';
+                document.head.appendChild(l);
+            }
+        })();
+    </script>
+
+    {% load static %}
+</head>
+
+<body class="bg-slate-50 text-slate-900">
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar"
+           class="w-64 bg-indigo-700 text-white flex flex-col fixed inset-y-0 left-0 z-30 shadow-xl transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative"
+           role="navigation" aria-label="Employee Sidebar">
+
+        <div class="h-20 flex items-center px-6 font-bold text-xl border-b border-indigo-600 bg-indigo-800">
+            🧵 Employee Panel
+        </div>
+
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+
+            <a href="{% url 'employee_dashboard' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Dashboard</a>
+
+            <a href="{% url 'saree_count' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Saree Count</a>
+
+            <a href="{% url 'pagdi' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Pagdi</a>
+
+            <a href="{% url 'warp' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Warp</a>
+
+            <a href="{% url 'employee_history' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">History</a>
+
+            <a href="{% url 'employee_salary_history' %}"
+               class="block px-4 py-2 rounded-md hover:bg-indigo-600">Salary History</a>
+
+            <a href="{% url 'logout' %}"
+               class="block px-4 py-2 bg-red-700/80 hover:bg-red-700 rounded-md">Logout</a>
+
+        </nav>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 ml-0 md:ml-64 flex flex-col h-screen overflow-hidden bg-slate-50">
+
+        <!-- MOBILE HEADER -->
+        <div class="md:hidden flex items-center justify-between bg-white border-b p-3">
+            <button id="sidebarToggle"
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                    class="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <svg class="w-6 h-6 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+
+            <div class="font-semibold">Employee Portal</div>
+            <div></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 md:p-10">
+
+            <!-- TOASTS -->
+            {% if messages %}
+            <div class="mb-6 space-y-2" aria-live="polite" role="status">
+                {% for m in messages %}
+                <div class="p-4 rounded-lg shadow-sm border-l-4 flex items-center justify-between
+                    {% if m.tags == 'success' %}bg-green-50 border-green-500 text-green-700
+                    {% elif m.tags == 'error' %}bg-red-50 border-red-500 text-red-700
+                    {% else %}bg-blue-50 border-blue-500 text-blue-700{% endif %}"
+                     role="alert">
+                    <span>{{ m }}</span>
+                    <button type="button"
+                            class="text-xl font-bold leading-none focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                            aria-label="Dismiss"
+                            onclick="this.closest('[role=alert]').remove()">
+                        &times;
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+<!-- Sidebar Script -->
+<script>
+(function(){
+    const btn = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    if(!btn || !sidebar) return;
+
+    function openSidebar(){
+        sidebar.classList.remove('-translate-x-full');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+    function closeSidebar(){
+        sidebar.classList.add('-translate-x-full');
+        btn.setAttribute('aria-expanded', 'false');
+    }
+
+    btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        expanded ? closeSidebar() : openSidebar();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true'){
+            closeSidebar();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>
+
+FILE END: templates\base_employee.html
+
+==================================================
+FILE START: templates\accounts\dashboard.html
+==================================================
+{% extends "base_employee.html" %}
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-6">👋 Welcome, {{ employee.name }}</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Personal Details -->
+    <div class="bg-white p-6 rounded-lg shadow border">
+        <h2 class="text-xl font-semibold mb-2">Your Details</h2>
+
+        <p><strong>Phone:</strong> {{ employee.phone }}</p>
+        <p><strong>Salary per Saree:</strong> ₹{{ employee.salary_per_saree }}</p>
+
+        {% if employee.is_approved %}
+            <p><strong>Status:</strong> 
+                <span class="text-green-600 font-bold">Approved</span>
+            </p>
+        {% else %}
+            <p><strong>Status:</strong> 
+                <span class="text-yellow-600 font-bold">Pending</span>
+            </p>
+        {% endif %}
+    </div>
+
+    <!-- Weekly Salary Summary -->
+    <div class="bg-white p-6 rounded-lg shadow border">
+        <h2 class="text-xl font-semibold mb-2">Weekly Summary</h2>
+
+        <p><strong>Week:</strong> {{ week_start }} → {{ week_end }}</p>
+        <p><strong>Sarees Completed:</strong> {{ weekly_sarees }}</p>
+        <p><strong>Advance:</strong> ₹{{ employee.advance_salary }}</p>
+        <p><strong>Final Salary:</strong> ₹{{ final_salary }}</p>
+    </div>
+
+</div>
+
+<!-- Quick Links -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+
+    <a href="/employee/saree-count/"
+       class="bg-white p-6 rounded shadow border hover:bg-gray-100 text-center font-semibold">
+        🧵 Saree Count
+    </a>
+
+    <a href="/employee/pagdi/"
+       class="bg-white p-6 rounded shadow border hover:bg-gray-100 text-center font-semibold">
+        🎯 Pagdi
+    </a>
+
+    <a href="/employee/warp-history/"
+       class="bg-white p-6 rounded shadow border hover:bg-gray-100 text-center font-semibold">
+        📚 Warp History
+    </a>
+
+</div>
+
+{% endblock %}
+
+FILE END: templates\accounts\dashboard.html
+
+==================================================
+FILE START: templates\accounts\employee_salary_history.html
+==================================================
+{% extends "base_employee.html" %}
+{% block title %}Salary History{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
+    <h2 class="text-2xl font-semibold mb-4">💰 Salary History</h2>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-3 text-left">Week</th>
+                    <th class="p-3 text-left">Sarees</th>
+                    <th class="p-3 text-left">Rate</th>
+                    <th class="p-3 text-left">Advance</th>
+                    <th class="p-3 text-left">Final Salary</th>
+                    <th class="p-3 text-left">Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for h in history %}
+                <tr class="border-t">
+                    <td class="p-3">
+                        {{ h.week_start|date:"M d, Y" }} — {{ h.week_end|date:"M d, Y" }}
+                    </td>
+                    <td class="p-3">{{ h.sarees }}</td>
+                    <td class="p-3">₹{{ h.salary_rate }}</td>
+                    <td class="p-3">₹{{ h.advance_salary }}</td>
+                    <td class="p-3 font-semibold">₹{{ h.final_salary }}</td>
+                    <td class="p-3">
+                        {% if h.paid_status %}
+                          <span class="text-green-600">Paid</span>
+                        {% else %}
+                          <span class="text-red-600">Unpaid</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-3 text-center text-gray-500">
+                        No salary history yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\employee_salary_history.html
+
+==================================================
+FILE START: templates\accounts\history.html
+==================================================
+<!-- templates/accounts/history.html -->
+{% extends "base_employee.html" %}
+{% block title %}Your History{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">📚 Your Activity History</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+  <div class="bg-white p-4 rounded shadow">
+    <h3 class="font-semibold mb-3">Saree History</h3>
+    <ul>
+      {% for s in saree_history %}
+      <li class="border p-2 mb-2 rounded">
+        <strong>{{ s.date|date:"M d, Y" }}</strong> — {{ s.count }} sarees<br>
+        <span class="text-sm text-gray-600">{{ s.notes }}</span>
+      </li>
+      {% empty %}
+      <p>No saree history yet.</p>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="space-y-6">
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-3">Pagdi History</h3>
+      <ul>
+        {% for p in pagdi_history %}
+        <li class="border p-2 mb-2 rounded">
+          <strong>{{ p.start_date|date:"M d, Y" }}</strong> — {{ p.end_date|default:"Active" }}<br>
+          Capacity: {{ p.capacity_sarees }}<br>
+          <span class="text-sm text-gray-600">{{ p.notes }}</span>
+        </li>
+        {% empty %}
+        <p>No pagdi history.</p>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-semibold mb-3">Warp History</h3>
+      <ul>
+        {% for w in warp_history %}
+        <li class="border p-2 mb-2 rounded">
+          <strong>{{ w.start_date|date:"M d, Y" }}</strong> — {{ w.end_date|default:"Active" }}<br>
+          Capacity: {{ w.capacity_sarees }}<br>
+          <span class="text-sm text-gray-600">{{ w.notes }}</span>
+        </li>
+        {% empty %}
+        <p>No warp history.</p>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\history.html
+
+==================================================
+FILE START: templates\accounts\login.html
+==================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | Loom Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen flex items-center justify-center bg-gray-100">
+
+<div class="bg-white shadow-xl rounded-xl p-8 w-full max-w-md">
+
+    <h2 class="text-3xl font-bold text-center mb-6">Welcome Back</h2>
+
+    {% if error %}
+    <div class="mb-4 p-3 rounded bg-red-100 text-red-700 border border-red-300">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label class="font-semibold">Phone Number</label>
+            <input type="text" name="phone"
+                   class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400"
+                   placeholder="Enter phone number" required>
+        </div>
+
+        <div>
+            <label class="font-semibold">Password</label>
+            <input type="password" name="password"
+                   class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400"
+                   placeholder="Enter password" required>
+        </div>
+
+        <button class="w-full bg-blue-600 text-white py-2 rounded mt-2 hover:bg-blue-700">
+            Login
+        </button>
+    </form>
+
+    <p class="text-center mt-4 text-sm">
+        Don't have an account?
+        <a href="/signup/" class="text-blue-600 underline">Create Account</a>
+    </p>
+
+</div>
+
+</body>
+</html>
+
+FILE END: templates\accounts\login.html
+
+==================================================
+FILE START: templates\accounts\pagdi.html
+==================================================
+{% extends "base_employee.html" %}
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-6">🎯 Pagdi Details</h1>
+
+<div class="bg-white p-6 rounded-shadow border">
+
+    {% if pagdi %}
+        <p><strong>Start Date:</strong> {{ pagdi.start_date }}</p>
+        <p><strong>Capacity:</strong> {{ pagdi.capacity_sarees }} sarees</p>
+        <p><strong>Remaining:</strong> {{ pagdi.remaining_sarees }}</p>
+
+        {% if pagdi.end_date %}
+            <p class="mt-3 text-gray-500">Pagdi Completed</p>
+        {% else %}
+            <p class="mt-3 text-green-700 font-semibold">Pagdi Active</p>
+        {% endif %}
+    {% else %}
+        <p>No active pagdi assigned.</p>
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+FILE END: templates\accounts\pagdi.html
+
+==================================================
+FILE START: templates\accounts\saree_count.html
+==================================================
+<!-- templates/accounts/saree_count.html -->
+{% extends "base_employee.html" %}
+{% block title %}Saree Count{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
+  <h2 class="text-2xl font-semibold mb-4">Your Saree Entries (Read-only)</h2>
+  <p class="text-sm text-gray-600 mb-4">Only admins can add or edit saree entries.</p>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="p-3 text-left">Date</th>
+          <th class="p-3 text-left">Count</th>
+          <th class="p-3 text-left">Notes</th>
+          <th class="p-3 text-left">Salary Earned</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for h in history %}
+        <tr class="border-t">
+          <td class="p-3">{{ h.date|date:"M d, Y" }}</td>
+          <td class="p-3">{{ h.count }}</td>
+          <td class="p-3">{{ h.notes|default:"—" }}</td>
+          <td class="p-3 font-semibold">₹{{ h.salary }}</td>
+        </tr>
+        {% empty %}
+        <tr><td class="p-3" colspan="4">No entries yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\saree_count.html
+
+==================================================
+FILE START: templates\accounts\signup.html
+==================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Account | Loom Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="min-h-screen flex items-center justify-center bg-gray-100">
+
+<div class="bg-white shadow-xl rounded-xl p-8 w-full max-w-md">
+
+    <h2 class="text-3xl font-bold text-center mb-6">Create Account</h2>
+
+    {% if error %}
+    <div class="mb-4 p-3 rounded bg-red-100 text-red-700 border border-red-300">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label class="font-semibold">Name</label>
+            <input type="text" name="name"
+                   class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400"
+                   required>
+        </div>
+
+        <div>
+            <label class="font-semibold">Phone</label>
+            <input type="text" name="phone"
+                   class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400"
+                   required>
+        </div>
+
+        <div>
+            <label class="font-semibold">Password</label>
+            <input type="password" name="password"
+                   class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-400"
+                   required>
+        </div>
+
+        <button class="w-full bg-green-600 text-white py-2 rounded mt-2 hover:bg-green-700">
+            Create Account
+        </button>
+    </form>
+
+    <p class="text-center mt-4 text-sm">
+        Already have an account?
+        <a href="/login/" class="text-blue-600 underline">Login</a>
+    </p>
+
+</div>
+
+</body>
+</html>
+
+FILE END: templates\accounts\signup.html
+
+==================================================
+FILE START: templates\accounts\warp.html
+==================================================
+{% extends "base_employee.html" %}
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-6">⚙ Warp Details</h1>
+
+<div class="bg-white p-6 rounded shadow border">
+
+    {% if warp %}
+        <p><strong>Start Date:</strong> {{ warp.start_date }}</p>
+        <p><strong>Capacity Sarees:</strong> {{ warp.capacity_sarees }}</p>
+        <p><strong>Remaining Sarees:</strong> {{ warp.remaining_sarees }}</p>
+
+        {% if warp.end_date %}
+            <p class="text-gray-600 mt-3">Warp Completed</p>
+        {% else %}
+            <p class="text-green-600 font-semibold mt-3">Warp Active</p>
+        {% endif %}
+    {% else %}
+        <p>No active warp assigned.</p>
+    {% endif %}
+
+</div>
+
+{% endblock %}
+
+FILE END: templates\accounts\warp.html
+
+==================================================
+FILE START: templates\accounts\warp_history.html
+==================================================
+{% extends "base_employee.html" %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-6">⚙ Warp History</h1>
+
+<div class="bg-white p-6 rounded shadow">
+  <h3 class="font-semibold mb-4">Warp Assignments</h3>
+  <ul class="space-y-3">
+    {% for w in warp_history %}
+    <li class="border p-3 rounded">
+      <div><strong>Start:</strong> {{ w.start_date }}</div>
+      <div><strong>End:</strong> {{ w.end_date|default:"Active" }}</div>
+      <div><strong>Capacity:</strong> {{ w.capacity_sarees }}</div>
+      <div class="text-sm text-gray-600">{{ w.notes }}</div>
+      <div class="text-sm text-gray-700 mt-2">Made: {{ w|cut:""|default:"0" }}</div>
+    </li>
+    {% empty %}
+    <li class="text-sm text-gray-500">No warp history.</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\warp_history.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_dashboard.html
+==================================================
+{% extends "base_admin.html" %}
+{% block content %}
+
+<h1 class="text-3xl font-bold mb-6">Admin Dashboard</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-2">Total Employees</h2>
+        <p class="text-3xl font-bold text-blue-600">{{ total_employees }}</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-2">Active Pagdis</h2>
+        <p class="text-3xl font-bold text-green-600">{{ active_pagdis }}</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-xl font-semibold mb-2">Warps Running</h2>
+        <p class="text-3xl font-bold text-indigo-600">{{ active_warps }}</p>
+    </div>
+
+</div>
+
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_dashboard.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_employees.html
+==================================================
+{% extends "base_admin.html" %}
+
+{% block title %}Employees{% endblock %}
+{% block header %}Employees{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <form method="GET" class="flex items-center gap-2">
+    <input name="q" value="{{ q }}" placeholder="Search name or phone"
+           class="border p-2 rounded" />
+    <button class="bg-indigo-600 text-white px-3 py-2 rounded">Search</button>
+  </form>
+
+  <a href="{% url 'admin_saree_entry' %}" class="bg-green-600 text-white px-3 py-2 rounded">Add Saree</a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  {% for e in employees %}
+  <div class="bg-white p-4 shadow rounded">
+    <div class="flex justify-between items-start">
+      <div>
+        <h3 class="font-semibold">{{ e.name }}</h3>
+        <p class="text-sm text-gray-600">{{ e.phone }}</p>
+      </div>
+      <div class="text-right">
+        {% if e.is_approved %}
+          <span class="text-sm text-green-600 font-semibold">Approved</span>
+        {% else %}
+          <span class="text-sm text-yellow-600 font-semibold">Pending</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-4 flex gap-2">
+      <a href="{% url 'admin_employee_detail' e.id %}" class="px-3 py-1 bg-blue-600 text-white rounded">View</a>
+      <a href="{% url 'admin_approve_employee' e.id %}" class="px-3 py-1 bg-green-600 text-white rounded">Approve</a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="bg-white p-4 shadow rounded">No employees found.</div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_employees.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_employee_detail.html
+==================================================
+<!-- templates/accounts/admin/admin_employee_detail.html -->
+{% extends "base_admin.html" %}
+{% block title %}Employee Detail{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto p-6 space-y-6">
+
+  <!-- Employee Header -->
+  <div class="bg-white rounded shadow p-6 flex justify-between items-center">
+    <div>
+      <h2 class="text-2xl font-semibold">{{ employee.name }}</h2>
+      <div class="text-sm text-gray-500">{{ employee.phone }}</div>
+    </div>
+    <div class="text-right">
+      <div class="text-sm text-gray-500">Salary per saree</div>
+      <div class="text-lg font-semibold">₹{{ employee.salary_per_saree }}</div>
+    </div>
+  </div>
+
+  <!-- Weekly Saree Entries -->
+  <div class="bg-white rounded shadow p-6">
+    <h3 class="font-semibold mb-4 text-lg">Weekly Saree Entries <span class="text-sm text-gray-500">({{ week_start|date:'M d, Y' }} — {{ week_end|date:'M d, Y' }})</span></h3>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-3 text-left text-sm text-gray-600">Date</th>
+            <th class="p-3 text-left text-sm text-gray-600">Count</th>
+            <th class="p-3 text-left text-sm text-gray-600">Notes</th>
+            <th class="p-3 text-left text-sm text-gray-600">Salary Earned</th>
+            <th class="p-3 text-left text-sm text-gray-600">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="bg-white divide-y">
+          {% for e in weekly_entries %}
+          <tr>
+            <td class="p-3 text-sm">{{ e.date|date:"M d, Y" }}</td>
+            <td class="p-3 text-sm">{{ e.count }}</td>
+            <td class="p-3 text-sm">{{ e.notes|default:"—" }}</td>
+            <td class="p-3 text-sm">₹{{ e.salary }}</td>
+
+            <td class="p-3 text-sm space-x-2">
+              <!-- Delete entry -->
+              <form method="post" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_saree">
+                <input type="hidden" name="entry_id" value="{{ e.id }}">
+                <button class="px-2 py-1 bg-red-600 text-white rounded text-xs" onclick="return confirm('Delete this entry?');">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td class="p-3 text-center text-gray-500" colspan="5">No entries this week.</td></tr>
+          {% endfor %}
+        </tbody>
+
+        <tfoot class="bg-gray-50 border-t">
+          <tr class="font-semibold">
+            <td class="p-3">Totals</td>
+            <td class="p-3">{{ weekly_sarees }}</td>
+            <td class="p-3">—</td>
+            <td class="p-3">₹{{ weekly_salary_before }}</td>
+            <td></td>
+          </tr>
+
+          <tr class="font-medium">
+            <td class="p-3">Advance</td>
+            <td class="p-3" colspan="4">
+              <div class="flex items-center space-x-3">
+                <span class="font-semibold text-gray-800">₹{{ employee.advance_salary }}</span>
+
+                <form method="post" action="{% url 'give_advance' employee.id %}" class="flex items-center space-x-2">
+                  {% csrf_token %}
+                  <input type="number" name="amount" min="1" placeholder="₹" class="w-20 border rounded px-2 py-1" required>
+                  <button class="bg-green-600 text-white px-3 py-1 rounded">Give</button>
+                </form>
+
+                <form method="post" action="{% url 'clear_advance' employee.id %}">
+                  {% csrf_token %}
+                  <button class="bg-red-600 text-white px-3 py-1 rounded">Clear</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+
+          <tr class="font-bold">
+            <td class="p-3">Final Salary</td>
+            <td class="p-3" colspan="4">₹{{ week_salary }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add Saree Entry (admin-only form) -->
+  <div class="bg-white rounded shadow p-6">
+    <h3 class="font-semibold text-lg mb-4">Add Saree Entry (Admin)</h3>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_saree">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="text-sm text-gray-600">Date</label>
+          <input type="date" name="date" required class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Count</label>
+          <input type="number" name="count" min="0" required class="w-full border rounded px-3 py-2">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">Notes</label>
+          <input type="text" name="notes" class="w-full border rounded px-3 py-2">
+        </div>
+      </div>
+      <div class="mt-3">
+        <button class="bg-green-600 text-white px-4 py-2 rounded">Save Entry</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Full Histories -->
+  <div class="bg-white rounded shadow p-6">
+    <h3 class="font-semibold mb-4">Full Histories</h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <h4 class="font-semibold mb-2">Saree History</h4>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50"><tr><th class="p-2">Date</th><th class="p-2">Count</th><th class="p-2">Notes</th></tr></thead>
+            <tbody>
+              {% for s in saree_history_full %}
+              <tr class="border-t"><td class="p-2">{{ s.date|date:"M d, Y" }}</td><td class="p-2">{{ s.count }}</td><td class="p-2">{{ s.notes }}</td></tr>
+              {% empty %}
+              <tr><td class="p-2" colspan="3">No saree history.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-2">Pagdi History</h4>
+        <ul class="space-y-2">
+          {% for p in pagdi_history_full %}
+          <li class="border p-2 rounded">
+            <div><strong>Start:</strong> {{ p.start_date|date:"M d, Y" }}</div>
+            <div><strong>End:</strong> {{ p.end_date|default:"Active" }}</div>
+            <div class="text-sm text-gray-600">{{ p.notes }}</div>
+          </li>
+          {% empty %}
+          <li>No pagdi history.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-2">Warp History</h4>
+        <ul class="space-y-2">
+          {% for w in warp_history_full %}
+          <li class="border p-2 rounded">
+            <div><strong>Start:</strong> {{ w.start_date|date:"M d, Y" }}</div>
+            <div><strong>End:</strong> {{ w.end_date|default:"Active" }}</div>
+            <div class="text-sm text-gray-600">{{ w.notes }}</div>
+          </li>
+          {% empty %}
+          <li>No warp history.</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-2">Salary History</h4>
+        <div class="overflow-x-auto">
+          <table class="min-w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="p-2">Week</th><th class="p-2">Sarees</th><th class="p-2">Rate</th><th class="p-2">Advance</th><th class="p-2">Final</th><th class="p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in salary_history_full %}
+              <tr class="border-t">
+                <td class="p-2">{{ h.week_start|date:"M d, Y" }} — {{ h.week_end|date:"M d, Y" }}</td>
+                <td class="p-2">{{ h.sarees }}</td>
+                <td class="p-2">₹{{ h.salary_rate }}</td>
+                <td class="p-2">₹{{ h.advance_salary }}</td>
+                <td class="p-2">₹{{ h.final_salary }}</td>
+                <td class="p-2">{% if h.paid_status %}<span class="text-green-700">Paid</span>{% else %}<span class="text-yellow-600">Unpaid</span>{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr><td class="p-2" colspan="6">No salary history.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_employee_detail.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_home.html
+==================================================
+{% extends "base_admin.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <div class="bg-white p-5 shadow rounded">
+    <h3 class="text-sm font-semibold text-gray-600">Total Employees</h3>
+    <p class="text-2xl font-bold mt-2">{{ stats.total_employees }}</p>
+  </div>
+
+  <div class="bg-white p-5 shadow rounded">
+    <h3 class="text-sm font-semibold text-gray-600">Unapproved</h3>
+    <p class="text-2xl font-bold mt-2">{{ stats.unapproved_count }}</p>
+  </div>
+
+  <div class="bg-white p-5 shadow rounded">
+    <h3 class="text-sm font-semibold text-gray-600">Active Pagdis / Warps</h3>
+    <p class="mt-2">{{ stats.active_pagdis }} pagdi · {{ stats.active_warps }} warp</p>
+  </div>
+</div>
+
+<div class="mt-6 bg-white p-4 rounded shadow">
+  <h2 class="font-semibold mb-3">Weekly Overview</h2>
+  <p>Week: {{ week_start }} — {{ week_end }}</p>
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_home.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_pagdi_create.html
+==================================================
+{% extends "base_admin.html" %}
+
+{% block title %}Assign Pagdi{% endblock %}
+{% block header %}Assign Pagdi{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow max-w-xl">
+  <form method="POST">
+    {% csrf_token %}
+    <label class="block font-semibold mb-1">Employee</label>
+    <select name="employee" class="w-full border p-2 rounded mb-4">
+      {% for e in employees %}
+      <option value="{{ e.id }}">{{ e.name }} — {{ e.phone }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="block font-semibold mb-1">Start Date</label>
+    <input type="date" name="start_date" class="w-full border p-2 rounded mb-4">
+
+    <label class="block font-semibold mb-1">Capacity (sarees)</label>
+    <input type="number" name="capacity_sarees" class="w-full border p-2 rounded mb-4">
+
+    <label class="block font-semibold mb-1">Notes</label>
+    <input type="text" name="notes" class="w-full border p-2 rounded mb-4">
+
+    <button class="bg-green-600 text-white px-4 py-2 rounded">Assign</button>
+  </form>
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_pagdi_create.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_pagdi_list.html
+==================================================
+{% extends "base_admin.html" %}
+{% block title %}Pagdi — List{% endblock %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-2xl font-semibold">Pagdi — List</h2>
+    <a href="{% url 'admin_pagdi_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded">Assign Pagdi</a>
+  </div>
+
+  <div class="space-y-4">
+    {% for d in data %}
+    <div class="bg-white rounded shadow p-4 flex justify-between items-start">
+      <div>
+        <div class="font-semibold">{{ d.obj.employee.name }}</div>
+        <div class="text-sm text-gray-600">Start: {{ d.obj.start_date|date:"M d, Y" }}</div>
+        <div class="text-sm text-gray-600">Capacity: {{ d.obj.capacity_sarees }}</div>
+        <div class="text-sm text-gray-600">Made: {{ d.made }} • Remaining: {{ d.remaining }}</div>
+        <div class="text-sm text-gray-500 mt-2">{{ d.obj.notes }}</div>
+      </div>
+
+      <div class="text-right">
+        {% if d.obj.end_date %}
+        <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded">Completed</span>
+        {% else %}
+        <span class="px-3 py-1 bg-green-100 text-green-700 rounded">Active</span>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="bg-white rounded shadow p-4">No pagdi history.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_pagdi_list.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_salary_history.html
+==================================================
+{% extends "base_admin.html" %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Salary History</h1>
+
+<div class="flex justify-end mb-4">
+    <a href="{% url 'download_global_weekly_salary' %}"
+       class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">
+       📥 Download Global Weekly Salary
+    </a>
+</div>
+
+
+<table class="min-w-full bg-white shadow rounded">
+    <thead>
+        <tr class="border-b">
+            <th class="p-3 text-left">Employee</th>
+            <th class="p-3 text-left">Week</th>
+            <th class="p-3 text-left">Sarees</th>
+            <th class="p-3 text-left">Rate</th>
+            <th class="p-3 text-left">Advance</th>
+            <th class="p-3 text-left">Final</th>
+            <th class="p-3 text-left">Paid?</th>
+            <th class="p-3 text-left">Notes</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for row in history %}
+        <tr class="border-b hover:bg-gray-50">
+            <td class="p-3">{{ row.employee.name }}</td>
+            <td class="p-3">{{ row.week_start }} — {{ row.week_end }}</td>
+            <td class="p-3">{{ row.sarees }}</td>
+            <td class="p-3">{{ row.salary_rate }}</td>
+            <td class="p-3">{{ row.advance_salary }}</td>
+            <td class="p-3">{{ row.final_salary }}</td>
+            <td class="p-3">
+                {% if row.paid_status %}
+                    <span class="text-green-600 font-semibold">Yes</span>
+                {% else %}
+                    <span class="text-red-600 font-semibold">No</span>
+                {% endif %}
+            </td>
+            <td class="p-3">{{ row.notes }}</td>
+        </tr>
+        {% empty %}
+        <tr><td class="p-3" colspan="8" class="text-center">No salary history found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_salary_history.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_saree_entry.html
+==================================================
+{% extends "base_admin.html" %}
+
+{% block title %}Saree Entry{% endblock %}
+{% block header %}Saree Entry{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow max-w-lg">
+  <form method="POST">
+    {% csrf_token %}
+
+    <label class="block font-semibold mb-1">Employee</label>
+    <select name="employee" class="w-full border p-2 rounded mb-4">
+      {% for e in employees %}
+      <option value="{{ e.id }}">{{ e.name }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="block font-semibold mb-1">Date</label>
+    <input type="date" name="date" class="w-full border p-2 rounded mb-4">
+
+    <label class="block font-semibold mb-1">Count</label>
+    <input type="number" name="count" class="w-full border p-2 rounded mb-4">
+
+    <label class="block font-semibold mb-1">Notes</label>
+    <input type="text" name="notes" class="w-full border p-2 rounded mb-4">
+
+    <button class="bg-green-600 text-white px-4 py-2 rounded">Save Entry</button>
+  </form>
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_saree_entry.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_warp_create.html
+==================================================
+{% extends "base_admin.html" %}
+
+{% block title %}Assign Warp{% endblock %}
+{% block header %}Assign Warp{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow max-w-lg">
+  <form method="POST">
+    {% csrf_token %}
+    <label class="block font-semibold mb-1">Employee</label>
+    <select name="employee" class="w-full border p-2 rounded mb-4">
+      {% for e in employees %}
+      <option value="{{ e.id }}">{{ e.name }} — {{ e.phone }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="block font-semibold mb-1">Capacity (sarees)</label>
+    <input type="number" name="capacity" class="w-full border p-2 rounded mb-4">
+
+    <button class="bg-purple-600 text-white px-4 py-2 rounded">Assign Warp</button>
+  </form>
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_warp_create.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_warp_list.html
+==================================================
+<!-- templates/accounts/admin/admin_warp_list.html -->
+{% extends "base_admin.html" %}
+{% block title %}Warp — List{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-2xl font-semibold">Warp — List</h2>
+    <a href="{% url 'admin_warp_create' %}" class="bg-blue-600 text-white px-4 py-2 rounded">Assign Warp</a>
+  </div>
+
+  <div class="space-y-4">
+    {% for d in data %}
+    <div class="bg-white rounded shadow p-4 flex justify-between items-start">
+      <div>
+        <div class="font-semibold">{{ d.obj.employee.name }}</div>
+        <div class="text-sm text-gray-600">Start: {{ d.obj.start_date|date:"M d, Y" }}</div>
+        <div class="text-sm text-gray-600">Capacity: {{ d.obj.capacity_sarees }}</div>
+        <div class="text-sm text-gray-600">Made: {{ d.made }} • Remaining: {{ d.remaining }}</div>
+        <div class="text-sm text-gray-500 mt-2">{{ d.obj.notes }}</div>
+      </div>
+
+      <div class="text-right">
+        {% if d.obj.end_date %}
+        <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded">Completed</span>
+        {% else %}
+        <span class="px-3 py-1 bg-green-100 text-green-700 rounded">Active</span>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="bg-white rounded shadow p-4">No warp history.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_warp_list.html
+
+==================================================
+FILE START: templates\accounts\admin\admin_weekly_salary.html
+==================================================
+{% extends "base_admin.html" %}
+{% load static %}
+{% block title %}Weekly Salary{% endblock %}
+
+{% block content %}
+<!-- Tailwind CDN if your base doesn't include it -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<div class="max-w-6xl mx-auto p-6">
+  <div class="bg-white shadow rounded p-6 mb-6">
+    <h2 class="text-2xl font-semibold">Weekly Salary</h2>
+    <p class="text-sm text-gray-600 mt-2">Week: <strong>{{ week_start|date:"M d, Y" }}</strong> — <strong>{{ week_end|date:"M d, Y" }}</strong></p>
+  </div>
+
+  <div class="space-y-4">
+    {% for row in rows %}
+    <div class="bg-white rounded shadow-md p-4 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 flex items-center justify-center bg-gray-100 rounded text-lg font-semibold text-gray-700">
+          {{ row.employee.name|slice:":1"|upper }}
+        </div>
+
+        <div>
+          <div class="font-semibold text-lg">{{ row.employee.name }}</div>
+          <div class="text-xs text-gray-500">{{ row.employee.phone }}</div>
+        </div>
+      </div>
+
+      <div class="flex-1 px-6 flex items-center justify-between">
+        <div class="text-center">
+          <div class="text-sm text-gray-500">Sarees</div>
+          <div class="font-medium text-lg">{{ row.sarees }}</div>
+        </div>
+
+        <div class="text-center">
+          <div class="text-sm text-gray-500">Before Advance</div>
+          <div class="font-medium">₹{{ row.salary_before }}</div>
+        </div>
+
+        <div class="text-center">
+          <div class="text-sm text-gray-500">Advance</div>
+          <div class="font-medium">₹{{ row.advance }}</div>
+        </div>
+
+        <div class="text-center">
+          <div class="text-sm text-gray-500">Final</div>
+          <div class="text-2xl font-semibold">₹{{ row.final_salary }}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <!-- Give advance button triggers a small inline form via JS fallback, but we provide a simple inline form -->
+        <form method="post" action="{% url 'give_advance' row.employee.id %}" class="flex items-center space-x-2">
+          {% csrf_token %}
+          <input name="amount" type="number" min="1" placeholder="₹" class="w-20 border rounded px-2 py-1" required>
+          <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">Give</button>
+        </form>
+
+        <!-- Clear advance -->
+        <form method="post" action="{% url 'clear_advance' row.employee.id %}">
+          {% csrf_token %}
+          <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Clear</button>
+        </form>
+
+        <!-- Paid toggle -->
+        {% if row.paid %}
+        <form method="post" action="{% url 'mark_unpaid' row.employee.id %}">
+          {% csrf_token %}
+          <button class="bg-gray-700 text-white px-3 py-1 rounded">Paid — Set Unpaid</button>
+        </form>
+        {% else %}
+        <form method="post" action="{% url 'mark_paid' row.employee.id %}" class="flex items-center space-x-2">
+          {% csrf_token %}
+          <input type="text" name="note" placeholder="Note (optional)" class="border rounded px-2 py-1 w-36">
+          <button class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Mark Paid</button>
+        </form>
+        {% endif %}
+
+        <a href="{% url 'salary_slip_pdf' row.employee.id %}" class="bg-indigo-600 text-white px-3 py-1 rounded">Slip</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+FILE END: templates\accounts\admin\admin_weekly_salary.html
+
+==================================================
+FILE START: accounts\admin.py
+==================================================
+from django.contrib import admin
+
+# Register your models here.
+
+FILE END: accounts\admin.py
+
+==================================================
+FILE START: accounts\apps.py
+==================================================
+from django.apps import AppConfig
+
+
+class AccountsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'accounts'
+
+FILE END: accounts\apps.py
+
+==================================================
+FILE START: accounts\forms.py
+==================================================
+from django import forms
+from django.contrib.auth.models import User
+from core.models import Employee
+
+
+class SignupForm(forms.ModelForm):
+    username = forms.CharField(max_length=100)
+    password = forms.CharField(widget=forms.PasswordInput)
+    confirm_password = forms.CharField(widget=forms.PasswordInput)
+    email = forms.EmailField(required=True)
+
+    class Meta:
+        model = Employee
+        fields = [
+            "name",
+            "phone",
+            "profile_picture",
+            "pagdi_thread_1",
+            "pagdi_thread_2",
+            "warp_threads",
+        ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm = cleaned_data.get("confirm_password")
+
+        if password != confirm:
+            raise forms.ValidationError("Passwords no not match!")
+
+        return cleaned_data
+
+FILE END: accounts\forms.py
+
+==================================================
+FILE START: accounts\models.py
+==================================================
+from django.db import models
+
+# Create your models here.
+
+FILE END: accounts\models.py
+
+==================================================
+FILE START: accounts\tests.py
+==================================================
+from django.test import TestCase
+
+# Create your tests here.
+
+FILE END: accounts\tests.py
+
+==================================================
+FILE START: accounts\urls.py
+==================================================
+# accounts/urls.py
+# accounts/urls.py
+from django.urls import path
+from . import views
+
+urlpatterns = [
+
+    # AUTH
+    path("signup/", views.signup_view, name="signup"),
+    path("login/", views.login_view, name="login"),
+    path("logout/", views.logout_view, name="logout"),
+    path("accounts/login/", views.login_view),
+
+    # EMPLOYEE SIDE
+    path("employee/dashboard/", views.employee_dashboard, name="employee_dashboard"),
+    path("employee/saree-count/", views.saree_count_view, name="saree_count"),
+    path("employee/pagdi/", views.pagdi_view, name="pagdi"),
+    path("employee/warp/", views.warp_view, name="warp"),
+    path("employee/history/", views.employee_history_view, name="employee_history"),
+    path("employee/salary-history/", views.employee_salary_history, name="employee_salary_history"),
+
+    # ADMIN PANEL
+    path("panel/", views.admin_home, name="admin_home"),
+    path("panel/dashboard/", views.admin_dashboard, name="admin_dashboard"),
+
+    # EMPLOYEES
+    path("panel/employees/", views.admin_employees, name="admin_employees"),
+    path("panel/employees/<int:emp_id>/", views.admin_employee_detail, name="admin_employee_detail"),
+    path("panel/employees/<int:emp_id>/approve/", views.admin_approve_employee, name="admin_approve_employee"),
+
+    # PAGDI
+    path("panel/pagdi/", views.admin_pagdi_list, name="admin_pagdi_list"),
+    path("panel/pagdi/create/", views.admin_pagdi_create, name="admin_pagdi_create"),
+
+    # WARP (admin)
+    path("panel/warp/", views.admin_warp_list, name="admin_warp_list"),
+    path("panel/warp/create/", views.admin_warp_create, name="admin_warp_create"),
+
+    # WEEKLY SALARY
+    path("panel/weekly-salary/", views.admin_weekly_salary, name="admin_weekly_salary"),
+
+    # SALARY ACTIONS
+    path("panel/give-advance/<int:emp_id>/", views.give_advance_view, name="give_advance"),
+    path("panel/clear-advance/<int:emp_id>/", views.clear_advance, name="clear_advance"),
+    path("panel/mark-paid/<int:emp_id>/", views.mark_paid, name="mark_paid"),
+    path("panel/mark-unpaid/<int:emp_id>/", views.mark_unpaid, name="mark_unpaid"),
+    path("panel/salary-slip/<int:emp_id>/", views.salary_slip_pdf, name="salary_slip_pdf"),
+
+    # SALARY HISTORY (ADMIN)
+    path("panel/salary-history/", views.admin_salary_history, name="admin_salary_history"),
+
+    # SAREE ENTRY (ADMIN)
+    path("panel/saree-entry/", views.admin_saree_entry, name="admin_saree_entry"),
+
+    # Download global history (XLSX)
+    path("panel/download-history/", views.download_global_history, name="download_global_history"),
+    
+    path("panel/download-global-weekly-salary/", views.download_global_weekly_salary, name="download_global_weekly_salary"),
+
+
+]
+
+FILE END: accounts\urls.py
+
+==================================================
+FILE START: accounts\views.py
+==================================================
+# accounts/views.py
+from django.contrib.auth.models import User
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.utils import timezone
+from django.db.models import Sum, Q
+from django.db import transaction
+
+from core.models import (
+    Employee, SareeCount, PagdiHistory, SalaryHistory,
+    WarpHistory, AdvanceHistory, PagdiChangeHistory
+)
+from core import services
+
+# openpyxl used for XLSX export
+import openpyxl
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font
+
+
+# ---------------------------------------------------------
+# Helpers & decorators
+# ---------------------------------------------------------
+def _is_staff(user):
+    return bool(user and (user.is_staff or user.is_superuser))
+
+
+staff_required = user_passes_test(_is_staff, login_url="login")
+
+
+# =========================================================
+# AUTH
+# =========================================================
+def signup_view(request):
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        phone = request.POST.get("phone", "").strip()
+        password = request.POST.get("password", "")
+
+        if not name or not phone or not password:
+            return render(request, "accounts/signup.html", {"error": "All fields are required."})
+
+        if User.objects.filter(username=phone).exists():
+            return render(request, "accounts/signup.html", {"error": "Phone already registered"})
+
+        user = User.objects.create_user(username=phone, password=password)
+        Employee.objects.create(
+            user=user,
+            name=name,
+            phone=phone,
+            salary_per_saree=0,
+            advance_salary=0,
+            is_approved=False
+        )
+
+        messages.success(request, "Account created — waiting for admin approval.")
+        return redirect("login")
+
+    return render(request, "accounts/signup.html")
+
+
+def login_view(request):
+    if request.method == "POST":
+        phone = request.POST.get("phone")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=phone, password=password)
+
+        if not user:
+            return render(request, "accounts/login.html", {"error": "Invalid phone or password."})
+
+        emp = Employee.objects.filter(user=user).first()
+
+        if emp:
+            if not emp.is_approved:
+                return render(request, "accounts/login.html", {"error": "Account not approved yet."})
+
+            login(request, user)
+            request.session["employee_id"] = emp.id
+            return redirect("employee_dashboard")
+
+        if user.is_staff or user.is_superuser:
+            login(request, user)
+            request.session["employee_id"] = None
+            return redirect("admin_home")
+
+        return render(request, "accounts/login.html", {"error": "Unauthorized account."})
+
+    return render(request, "accounts/login.html")
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("login")
+
+
+# =========================================================
+# EMPLOYEE VIEWS
+# =========================================================
+@login_required
+def employee_dashboard(request):
+    """
+    Employee dashboard. No ability to add saree counts here (read-only).
+    """
+    emp_id = request.session.get("employee_id")
+    if not emp_id:
+        messages.error(request, "Session expired or no employee session. Please login again.")
+        return redirect("login")
+
+    employee = get_object_or_404(Employee, id=emp_id)
+
+    today = timezone.localdate()
+    monday, sunday = services.get_week_bounds(today)
+
+    weekly_sarees = SareeCount.objects.filter(
+        employee=employee, date__gte=monday, date__lte=sunday
+    ).aggregate(Sum("count"))["count__sum"] or 0
+
+    weekly_salary_before = weekly_sarees * (employee.salary_per_saree or 0)
+    final_salary = weekly_salary_before - (employee.advance_salary or 0)
+
+    return render(request, "accounts/dashboard.html", {
+        "employee": employee,
+        "weekly_sarees": weekly_sarees,
+        "sarees": weekly_sarees,
+        "salary_per_saree": employee.salary_per_saree,
+        "advance": employee.advance_salary,
+        "final_salary": final_salary,
+        "week_start": monday,
+        "week_end": sunday,
+    })
+
+
+@login_required
+def saree_count_view(request):
+    """
+    Employee saree history page. Employees CANNOT add saree counts here.
+    Compute salary per row in view to avoid template arithmetic.
+    """
+    employee = get_object_or_404(Employee, user=request.user)
+
+    rows = SareeCount.objects.filter(employee=employee).order_by("-date").select_related("employee")
+
+    history = []
+    rate = employee.salary_per_saree or 0
+    for r in rows:
+        history.append({
+            "id": r.id,
+            "date": r.date,
+            "count": r.count,
+            "notes": r.notes,
+            "salary": r.count * rate
+        })
+
+    return render(request, "accounts/saree_count.html", {
+        "employee": employee,
+        "history": history
+    })
+
+
+@login_required
+def pagdi_view(request):
+    employee = get_object_or_404(Employee, user=request.user)
+
+    active = PagdiHistory.objects.filter(employee=employee, end_date__isnull=True).first()
+
+    if request.method == "POST" and active:
+        services.finish_pagdi(active.id, request.user, "Finished by employee")
+        messages.success(request, "Pagdi finished.")
+        return redirect("pagdi")
+
+    sarees_made = 0
+    remaining = 0
+
+    if active:
+        sarees_made = SareeCount.objects.filter(employee=employee, date__gte=active.start_date).aggregate(Sum("count"))["count__sum"] or 0
+        remaining = max(0, active.capacity_sarees - sarees_made)
+
+    history = PagdiHistory.objects.filter(employee=employee).order_by("-start_date")
+
+    return render(request, "accounts/pagdi.html", {
+        "employee": employee,
+        "pagdi": active,
+        "sarees_made": sarees_made,
+        "remaining": remaining,
+        "history": history,
+    })
+
+
+@login_required
+def warp_view(request):
+    emp_id = request.session.get("employee_id")
+    employee = get_object_or_404(Employee, id=emp_id)
+
+    active = WarpHistory.objects.filter(employee=employee, end_date__isnull=True).first()
+
+    sarees_made = 0
+    remaining = 0
+
+    if active:
+        sarees_made = SareeCount.objects.filter(employee=employee, date__gte=active.start_date).aggregate(Sum("count"))["count__sum"] or 0
+        remaining = max(0, active.capacity_sarees - sarees_made)
+
+    history = WarpHistory.objects.filter(employee=employee).order_by("-start_date")
+
+    return render(request, "accounts/warp.html", {
+        "employee": employee,
+        "warp": active,
+        "sarees_made": sarees_made,
+        "remaining": remaining,
+        "history": history,
+    })
+
+
+@login_required
+def employee_history_view(request):
+    """
+    Combined history page for employee: saree entries, pagdi history, warp history.
+    """
+    emp = get_object_or_404(Employee, user=request.user)
+
+    saree_history = SareeCount.objects.filter(employee=emp).order_by("-date")
+    pagdi_history = PagdiHistory.objects.filter(employee=emp).order_by("-start_date")
+    warp_history = WarpHistory.objects.filter(employee=emp).order_by("-start_date")
+
+    return render(request, "accounts/history.html", {
+        "employee": emp,
+        "saree_history": saree_history,
+        "pagdi_history": pagdi_history,
+        "warp_history": warp_history,
+    })
+
+
+@login_required
+def employee_salary_history(request):
+    """
+    Employee-facing Salary History: list SalaryHistory rows for this employee.
+    """
+    emp = get_object_or_404(Employee, user=request.user)
+    history = SalaryHistory.objects.filter(employee=emp).order_by("-week_start")
+    return render(request, "accounts/employee_salary_history.html", {
+        "employee": emp,
+        "history": history
+    })
+
+
+# =========================================================
+# ADMIN HOME / DASHBOARD
+# =========================================================
+@staff_required
+def admin_home(request):
+    today = timezone.localdate()
+    monday, sunday = services.get_week_bounds(today)
+
+    total_employees = Employee.objects.count()
+    unapproved_count = Employee.objects.filter(is_approved=False).count()
+    active_pagdis = PagdiHistory.objects.filter(end_date__isnull=True).count()
+    active_warps = WarpHistory.objects.filter(end_date__isnull=True).count()
+
+    stats = {
+        "total_employees": total_employees,
+        "unapproved_count": unapproved_count,
+        "active_pagdis": active_pagdis,
+        "active_warps": active_warps,
+    }
+
+    return render(request, "accounts/admin/admin_home.html", {
+        "stats": stats,
+        "week_start": monday,
+        "week_end": sunday
+    })
+
+
+@staff_required
+def admin_dashboard(request):
+    return admin_home(request)
+
+
+# =========================================================
+# ADMIN EMPLOYEES
+# =========================================================
+@staff_required
+def admin_employees(request):
+    query = request.GET.get("q", "")
+
+    employees = Employee.objects.all().order_by("-id")
+    if query:
+        employees = employees.filter(Q(name__icontains=query) | Q(phone__icontains=query))
+
+    return render(request, "accounts/admin/admin_employees.html", {
+        "employees": employees,
+        "q": query
+    })
+
+
+@staff_required
+def admin_employee_detail(request, emp_id):
+    """
+    Admin detail page for a specific employee.
+    Show saree entries (week), pagdi history, warp history and salary history for the employee.
+    """
+    employee = get_object_or_404(Employee, id=emp_id)
+    today = timezone.localdate()
+    monday, sunday = services.get_week_bounds(today)
+
+    # weekly entries raw queryset
+    weekly_entries_raw = SareeCount.objects.filter(employee=employee, date__gte=monday, date__lte=sunday).order_by("-date")
+    # compute salary for each entry (to avoid template arithmetic)
+    weekly_entries = []
+    rate = employee.salary_per_saree or 0
+    for e in weekly_entries_raw:
+        weekly_entries.append({
+            "id": e.id,
+            "date": e.date,
+            "count": e.count,
+            "notes": e.notes,
+            "salary": e.count * rate
+        })
+
+    week_sarees = sum([w["count"] for w in weekly_entries]) if weekly_entries else 0
+    weekly_salary_before = week_sarees * rate
+    week_final = weekly_salary_before - (employee.advance_salary or 0)
+
+    # Employee-level histories
+    saree_history_full = SareeCount.objects.filter(employee=employee).order_by("-date")
+    pagdi_history_full = PagdiHistory.objects.filter(employee=employee).order_by("-start_date")
+    warp_history_full = WarpHistory.objects.filter(employee=employee).order_by("-start_date")
+    salary_history_full = SalaryHistory.objects.filter(employee=employee).order_by("-week_start")
+
+    # ---- POST ACTIONS ----
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "approve":
+            employee.is_approved = True
+            employee.save(update_fields=["is_approved", "updated_at"])
+            messages.success(request, "Employee approved.")
+            return redirect("admin_employee_detail", emp_id=emp_id)
+
+        if action == "save_salary":
+            try:
+                new_salary = int(request.POST.get("salary_per_saree"))
+                if new_salary < 0:
+                    raise ValueError("Negative not allowed")
+            except Exception:
+                messages.error(request, "Invalid salary value.")
+                return redirect("admin_employee_detail", emp_id=emp_id)
+
+            employee.salary_per_saree = new_salary
+            employee.save(update_fields=["salary_per_saree", "updated_at"])
+            messages.success(request, "Salary updated.")
+            return redirect("admin_employee_detail", emp_id=emp_id)
+
+        if action == "add_saree":
+            # Admin adding a saree entry for the employee
+            try:
+                date_str = request.POST.get("date")
+                count = int(request.POST.get("count"))
+                notes = request.POST.get("notes", "")
+            except Exception:
+                messages.error(request, "Invalid saree entry.")
+                return redirect("admin_employee_detail", emp_id=emp_id)
+
+            SareeCount.objects.create(employee=employee, date=date_str, count=count, notes=notes)
+            messages.success(request, "Saree entry added.")
+            return redirect("admin_employee_detail", emp_id=emp_id)
+
+        if action == "delete_saree":
+            entry_id = request.POST.get("entry_id")
+            SareeCount.objects.filter(id=entry_id, employee=employee).delete()
+            messages.success(request, "Entry deleted.")
+            return redirect("admin_employee_detail", emp_id=emp_id)
+
+    # compute whether week is paid (for UI)
+    sh = SalaryHistory.objects.filter(employee=employee, week_start=monday, week_end=sunday).first()
+    week_paid = sh.paid_status if sh else False
+
+    return render(request, "accounts/admin/admin_employee_detail.html", {
+        "employee": employee,
+        "weekly_entries": weekly_entries,
+        "weekly_sarees": week_sarees,
+        "weekly_salary_before": weekly_salary_before,
+        "week_salary": week_final,
+        "week_paid": week_paid,
+        "week_start": monday,
+        "week_end": sunday,
+        # full histories for admin view
+        "saree_history_full": saree_history_full,
+        "pagdi_history_full": pagdi_history_full,
+        "warp_history_full": warp_history_full,
+        "salary_history_full": salary_history_full,
+    })
+
+
+# =========================================================
+# PAGDI / WARP (ADMIN)
+# =========================================================
+@staff_required
+def admin_pagdi_list(request):
+    pagdis = PagdiHistory.objects.all().order_by("-start_date")
+    result = []
+
+    for p in pagdis.select_related("employee"):
+        made = SareeCount.objects.filter(employee=p.employee, date__gte=p.start_date).aggregate(Sum("count"))["count__sum"] or 0
+        result.append({
+            "obj": p,
+            "made": made,
+            "remaining": max(0, p.capacity_sarees - made)
+        })
+
+    return render(request, "accounts/admin/admin_pagdi_list.html", {"data": result})
+
+
+@staff_required
+def admin_pagdi_create(request):
+    employees = Employee.objects.filter(is_approved=True)
+
+    if request.method == "POST":
+        emp_id = request.POST.get("employee")
+        start = request.POST.get("start_date")
+        try:
+            capacity = int(request.POST.get("capacity_sarees"))
+        except Exception:
+            messages.error(request, "Invalid capacity value.")
+            return redirect("admin_pagdi_create")
+
+        notes = request.POST.get("notes", "")
+
+        old = PagdiHistory.objects.filter(employee_id=emp_id, end_date__isnull=True).first()
+        if old:
+            services.finish_pagdi(old.id, request.user, "Auto-finish due to new assignment")
+
+        newp = PagdiHistory.objects.create(employee_id=emp_id, start_date=start, capacity_sarees=capacity, notes=notes)
+
+        PagdiChangeHistory.objects.create(pagdi=newp, employee=newp.employee, admin_user=request.user, action="CREATE", new_capacity=capacity, note=notes)
+
+        messages.success(request, "Pagdi created.")
+        return redirect("admin_pagdi_list")
+
+    return render(request, "accounts/admin/admin_pagdi_create.html", {"employees": employees})
+
+
+@staff_required
+def admin_warp_list(request):
+    """
+    Admin warp listing (similar to pagdi list). Also has Assign Warp button.
+    """
+    warps = WarpHistory.objects.all().order_by("-start_date")
+    result = []
+    for w in warps.select_related("employee"):
+        made = SareeCount.objects.filter(employee=w.employee, date__gte=w.start_date).aggregate(Sum("count"))["count__sum"] or 0
+        result.append({
+            "obj": w,
+            "made": made,
+            "remaining": max(0, w.capacity_sarees - made)
+        })
+    return render(request, "accounts/admin/admin_warp_list.html", {"data": result})
+
+
+@staff_required
+def admin_warp_create(request):
+    employees = Employee.objects.filter(is_approved=True)
+
+    if request.method == "POST":
+        WarpHistory.objects.create(employee_id=request.POST.get("employee"), capacity_sarees=int(request.POST.get("capacity") or 0), start_date=timezone.localdate())
+        messages.success(request, "Warp assigned.")
+        return redirect("admin_warp_list")
+
+    return render(request, "accounts/admin/admin_warp_create.html", {"employees": employees})
+
+
+# =========================================================
+# WEEKLY SALARY (ADMIN)
+# =========================================================
+@staff_required
+def admin_weekly_salary(request):
+    today = timezone.localdate()
+    monday, sunday = services.get_week_bounds(today)
+
+    rows = []
+    employees = Employee.objects.all()
+
+    for emp in employees:
+        sarees = SareeCount.objects.filter(employee=emp, date__gte=monday, date__lte=sunday).aggregate(Sum("count"))["count__sum"] or 0
+        salary_before = sarees * (emp.salary_per_saree or 0)
+        advance_amt = emp.advance_salary or 0
+        final_salary = salary_before - advance_amt
+
+        sh = SalaryHistory.objects.filter(employee=emp, week_start=monday, week_end=sunday).first()
+        paid = sh.paid_status if sh else False
+
+        rows.append({
+            "employee": emp,
+            "sarees": sarees,
+            "salary_before": salary_before,
+            "advance": advance_amt,
+            "final_salary": final_salary,
+            "paid": paid,
+        })
+
+    return render(request, "accounts/admin/admin_weekly_salary.html", {"rows": rows, "week_start": monday, "week_end": sunday})
+
+
+@staff_required
+def admin_salary_history(request):
+    history = SalaryHistory.objects.select_related("employee").all().order_by("-week_start")
+    return render(request, "accounts/admin/admin_salary_history.html", {"history": history})
+
+
+# =========================================================
+# SALARY ACTIONS (ADMIN)
+# =========================================================
+@staff_required
+def give_advance_view(request, emp_id):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST only")
+    try:
+        amount = int(request.POST.get("amount"))
+    except Exception:
+        return HttpResponseBadRequest("Invalid amount")
+    note = request.POST.get("note", "")
+    with transaction.atomic():
+        services.give_advance(emp_id, amount, request.user, note)
+    messages.success(request, f"Advance ₹{amount} added.")
+    return redirect("admin_weekly_salary")
+
+
+@staff_required
+def clear_advance(request, emp_id):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST only")
+    services.clear_advance_for_employee(emp_id, request.user, "Cleared by admin")
+    messages.success(request, "Advance cleared.")
+    return redirect("admin_weekly_salary")
+
+
+@staff_required
+def mark_paid(request, emp_id):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST only")
+    emp = get_object_or_404(Employee, id=emp_id)
+    today = timezone.localdate()
+    monday, sunday = services.get_week_bounds(today)
+
+    sarees = SareeCount.objects.filter(employee=emp, date__gte=monday, date__lte=sunday).aggregate(Sum("count"))["count__sum"] or 0
+    rate = emp.salary_per_saree or 0
+    total = sarees * rate
+    advance = emp.advance_salary or 0
+    final = total - advance
+    note = request.POST.get("note", "")
+
+    sh, created = SalaryHistory.objects.get_or_create(employee=emp, week_start=monday, week_end=sunday, defaults={
+        "sarees": sarees,
+        "salary_rate": rate,
+        "total_salary_before_advance": total,
+        "advance_salary": advance,
+        "final_salary": final,
+        "paid_status": True,
+        "paid_date": today,
+        "notes": note or "Paid"
+    })
+
+    if not created:
+        sh.paid_status = True
+        sh.paid_date = today
+        sh.final_salary = final
+        sh.notes = note or sh.notes
+        sh.save(update_fields=["paid_status", "paid_date", "final_salary", "notes"])
+
+
+    messages.success(request, "Marked paid.")
+    return redirect("admin_weekly_salary")
+
+
+@staff_required
+def mark_unpaid(request, emp_id):
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST only")
+    emp = get_object_or_404(Employee, id=emp_id)
+    today = timezone.localdate()
+    monday, sunday = services.get_week_bounds(today)
+    sh = SalaryHistory.objects.filter(employee=emp, week_start=monday, week_end=sunday).first()
+    if sh:
+        sh.paid_status = False
+        sh.paid_date = None
+        sh.save(update_fields=["paid_status", "paid_date"])
+
+    messages.success(request, "Marked unpaid.")
+    return redirect("admin_weekly_salary")
+
+
+# =========================================================
+# PDF EXPORT (single employee salary slip)
+# =========================================================
+@staff_required
+def salary_slip_pdf(request, emp_id):
+    import io
+    from reportlab.pdfgen import canvas
+
+    emp = get_object_or_404(Employee, id=emp_id)
+    today = timezone.localdate()
+    monday, sunday = services.get_week_bounds(today)
+
+    sarees = SareeCount.objects.filter(employee=emp, date__gte=monday, date__lte=sunday).aggregate(Sum("count"))["count__sum"] or 0
+    final = (sarees * (emp.salary_per_saree or 0)) - (emp.advance_salary or 0)
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="salary_slip_{emp.name}.pdf"'
+
+    p = canvas.Canvas(response)
+    p.drawString(100, 800, f"Salary Slip for {emp.name}")
+    p.drawString(100, 780, f"Week: {monday} — {sunday}")
+    p.drawString(100, 760, f"Final Salary: ₹{final}")
+    p.showPage()
+    p.save()
+    return response
+
+
+# =========================================================
+# ADMIN: SAREE ENTRY & APPROVE
+# =========================================================
+@staff_required
+def admin_saree_entry(request):
+    employees = Employee.objects.filter(is_approved=True).order_by("name")
+    if request.method == "POST":
+        emp_id = request.POST.get("employee")
+        try:
+            count = int(request.POST.get("count"))
+        except Exception:
+            messages.error(request, "Invalid count")
+            return redirect("admin_saree_entry")
+        date = request.POST.get("date") or timezone.localdate()
+        notes = request.POST.get("notes", "")
+        SareeCount.objects.create(employee_id=emp_id, count=count, date=date, notes=notes)
+        messages.success(request, "Saree entry added.")
+        return redirect("admin_saree_entry")
+    return render(request, "accounts/admin/admin_saree_entry.html", {"employees": employees})
+
+
+@staff_required
+def admin_approve_employee(request, emp_id):
+    emp = get_object_or_404(Employee, id=emp_id)
+    emp.is_approved = True
+    emp.save(update_fields=["is_approved", "updated_at"])
+    messages.success(request, f"{emp.name} approved.")
+    return redirect("admin_employees")
+
+
+# =========================================================
+# EXCEL / GLOBAL HISTORY DOWNLOAD (XLSX)
+# =========================================================
+@staff_required
+def download_global_history(request):
+    """
+    Exports all history data (Saree, Pagdi, Warp, Salary) into a single Excel file.
+    """
+    wb = openpyxl.Workbook()
+
+    # Sheet 1 - Saree History
+    ws = wb.active
+    ws.title = "Saree History"
+    headers = ["Employee", "Date", "Count", "Notes", "Salary Earned"]
+    ws.append(headers)
+    for h in SareeCount.objects.select_related("employee").order_by("-date"):
+        salary = h.count * (h.employee.salary_per_saree or 0)
+        ws.append([h.employee.name, str(h.date), h.count, h.notes or "", salary])
+    for col in range(1, len(headers) + 1):
+        ws[f"{get_column_letter(col)}1"].font = Font(bold=True)
+
+    # Sheet 2 - Pagdi History
+    ws2 = wb.create_sheet("Pagdi History")
+    headers = ["Employee", "Start", "End", "Capacity", "Notes"]
+    ws2.append(headers)
+    for p in PagdiHistory.objects.select_related("employee").order_by("-start_date"):
+        ws2.append([p.employee.name, str(p.start_date), str(p.end_date) if p.end_date else "Active", p.capacity_sarees, p.notes or ""])
+    for col in range(1, len(headers) + 1):
+        ws2[f"{get_column_letter(col)}1"].font = Font(bold=True)
+
+    # Sheet 3 - Warp History
+    ws3 = wb.create_sheet("Warp History")
+    headers = ["Employee", "Start", "End", "Capacity", "Notes"]
+    ws3.append(headers)
+    for w in WarpHistory.objects.select_related("employee").order_by("-start_date"):
+        ws3.append([w.employee.name, str(w.start_date), str(w.end_date) if w.end_date else "Active", w.capacity_sarees, w.notes or ""])
+    for col in range(1, len(headers) + 1):
+        ws3[f"{get_column_letter(col)}1"].font = Font(bold=True)
+
+    # Sheet 4 - Salary History
+    ws4 = wb.create_sheet("Salary History")
+    headers = ["Employee", "Week Start", "Week End", "Sarees", "Rate", "Advance", "Final", "Paid", "Notes"]
+    ws4.append(headers)
+    for s in SalaryHistory.objects.select_related("employee").order_by("-week_start"):
+        ws4.append([s.employee.name, str(s.week_start), str(s.week_end), s.sarees, s.salary_rate, s.advance_salary, s.final_salary, "Yes" if s.paid_status else "No", s.notes or ""])
+    for col in range(1, len(headers) + 1):
+        ws4[f"{get_column_letter(col)}1"].font = Font(bold=True)
+
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    filename = "Global_History_Report.xlsx"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+@staff_required
+def download_global_weekly_salary(request):
+    """
+    Export ALL salary history weeks (past + present) into XLSX.
+    """
+    import openpyxl
+    from openpyxl.utils import get_column_letter
+    from openpyxl.styles import Font
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Salary History"
+
+    headers = ["Employee", "Week Start", "Week End", "Sarees", "Rate", "Advance", "Final", "Paid?", "Notes"]
+    ws.append(headers)
+
+    # Bold headers
+    for col in range(1, len(headers) + 1):
+        ws[f"{get_column_letter(col)}1"].font = Font(bold=True)
+
+    history = SalaryHistory.objects.select_related("employee").order_by("-week_start")
+
+    for s in history:
+        ws.append([
+            s.employee.name,
+            str(s.week_start),
+            str(s.week_end),
+            s.sarees,
+            s.salary_rate,
+            s.advance_salary,
+            s.final_salary,
+            "Yes" if s.paid_status else "No",
+            s.notes or ""
+        ])
+
+    # Prepare response
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="Global_Weekly_Salary.xlsx"'
+
+    wb.save(response)
+    return response
+
+FILE END: accounts\views.py
+
+==================================================
+FILE START: accounts\__init__.py
+==================================================
+
+FILE END: accounts\__init__.py
+
+==================================================
+FILE START: accounts\migrations\__init__.py
+==================================================
+
+FILE END: accounts\migrations\__init__.py
+
+==================================================
+FILE START: core\admin.py
+==================================================
+# core/admin.py
+from django.contrib import admin
+from .models import (
+    Employee,
+    SareeCount,
+    WarpHistory,
+    PagdiHistory,
+    AlertEmail,
+    SalaryHistory,
+    AdvanceHistory,
+    PagdiChangeHistory,
+)
+
+
+@admin.register(Employee)
+class EmployeeAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "name",
+        "phone",
+        "is_approved",
+        "salary_per_saree",
+        "advance_salary",
+        "joining_date",
+        "performance",
+    )
+    list_filter = ("is_approved", "performance")
+    search_fields = ("name", "phone", "user__email")
+    readonly_fields = ("joining_date", "created_at", "updated_at")
+
+
+@admin.register(SareeCount)
+class SareeCountAdmin(admin.ModelAdmin):
+    list_display = ("employee", "date", "count", "salary_earned")
+    list_filter = ("date", "employee")
+    search_fields = ("employee__name",)
+    ordering = ("-date",)
+
+
+@admin.register(WarpHistory)
+class WarpHistoryAdmin(admin.ModelAdmin):
+    list_display = ("employee", "start_date", "end_date", "capacity_sarees", "remaining_display", "is_active_display")
+    list_filter = ("start_date", "end_date")
+    search_fields = ("employee__name",)
+
+    def remaining_display(self, obj):
+        return obj.remaining_sarees()
+    remaining_display.short_description = "Remaining Sarees"
+
+    def is_active_display(self, obj):
+        return obj.is_active()
+    is_active_display.boolean = True
+    is_active_display.short_description = "Active"
+
+
+@admin.register(PagdiHistory)
+class PagdiHistoryAdmin(admin.ModelAdmin):
+    list_display = ("employee", "start_date", "end_date", "capacity_sarees", "remaining_display", "is_active_display")
+    list_filter = ("start_date", "end_date")
+    search_fields = ("employee__name",)
+
+    def remaining_display(self, obj):
+        return obj.remaining_sarees()
+    remaining_display.short_description = "Remaining Sarees"
+
+    def is_active_display(self, obj):
+        return obj.is_active()
+    is_active_display.boolean = True
+    is_active_display.short_description = "Active"
+
+
+@admin.register(SalaryHistory)
+class SalaryHistoryAdmin(admin.ModelAdmin):
+    list_display = ("employee", "week_start", "week_end", "sarees", "salary_rate", "advance_salary", "final_salary", "paid_status", "paid_date")
+    list_filter = ("paid_status", "week_start")
+    search_fields = ("employee__name",)
+    date_hierarchy = "week_end"
+
+
+@admin.register(AdvanceHistory)
+class AdvanceHistoryAdmin(admin.ModelAdmin):
+    list_display = ("employee", "action_type", "previous_amount", "new_amount", "admin_user", "created_at")
+    list_filter = ("action_type",)
+    search_fields = ("employee__name", "admin_user__username")
+
+
+@admin.register(PagdiChangeHistory)
+class PagdiChangeHistoryAdmin(admin.ModelAdmin):
+    list_display = ("employee", "action", "previous_capacity", "new_capacity", "admin_user", "created_at")
+    list_filter = ("action",)
+    search_fields = ("employee__name", "admin_user__username")
+
+
+@admin.register(AlertEmail)
+class AlertEmailAdmin(admin.ModelAdmin):
+    list_display = ("email",)
+
+FILE END: core\admin.py
+
+==================================================
+FILE START: core\apps.py
+==================================================
+from django.apps import AppConfig
+
+
+class CoreConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'core'
+
+FILE END: core\apps.py
+
+==================================================
+FILE START: core\models.py
+==================================================
+# core/models.py
+from django.db import models
+from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator
+from django.db.models import Sum
+from django.utils import timezone
+from datetime import date
+
+
+# ============================================================
+# EMPLOYEE MODEL
+# ============================================================
+
+class Employee(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="employee")
+    name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15, db_index=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', null=True, blank=True)
+
+    joining_date = models.DateField(auto_now_add=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Material tracking
+    pagdi_thread_1 = models.IntegerField(default=0)
+    pagdi_thread_2 = models.IntegerField(default=0)
+    warp_threads = models.IntegerField(default=0)
+
+    # Payroll
+    salary_per_saree = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
+    advance_salary = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)])
+    current_week_salary = models.IntegerField(default=0)
+
+    performance = models.CharField(max_length=20, default="Average")
+    is_approved = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["name"]
+        indexes = [models.Index(fields=["phone"])]
+
+    def __str__(self):
+        return f"{self.name} ({self.phone})"
+
+
+# ============================================================
+# SAREE COUNT MODEL
+# ============================================================
+
+class SareeCount(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="saree_counts")
+    date = models.DateField(db_index=True)
+    count = models.PositiveIntegerField(default=0)
+    notes = models.TextField(blank=True, null=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("employee", "date")
+        ordering = ["-date"]
+        indexes = [models.Index(fields=["employee", "date"])]
+
+    def salary_earned(self):
+        rate = self.employee.salary_per_saree or 0
+        return self.count * rate
+
+    def __str__(self):
+        return f"{self.employee.name} - {self.date} - {self.count}"
+
+
+# ============================================================
+# WARP HISTORY
+# ============================================================
+
+class WarpHistory(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="warp_history")
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    capacity_sarees = models.PositiveIntegerField(default=0)
+    notes = models.TextField(blank=True, null=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-start_date"]
+
+    def remaining_sarees(self):
+        sarees_made = SareeCount.objects.filter(
+            employee=self.employee,
+            date__gte=self.start_date,
+            date__lte=date.today()
+        ).aggregate(Sum("count"))["count__sum"] or 0
+        return self.capacity_sarees - sarees_made
+
+    def is_active(self):
+        return self.end_date is None
+
+    def __str__(self):
+        return f"Warp for {self.employee.name} ({self.capacity_sarees} sarees)"
+
+
+# ============================================================
+# PAGDI HISTORY
+# ============================================================
+
+class PagdiHistory(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="pagdi_history")
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    capacity_sarees = models.PositiveIntegerField(default=0)
+    notes = models.TextField(blank=True, null=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-start_date"]
+
+    def remaining_sarees(self):
+        sarees_made = SareeCount.objects.filter(
+            employee=self.employee,
+            date__gte=self.start_date,
+            date__lte=date.today()
+        ).aggregate(Sum("count"))["count__sum"] or 0
+        return self.capacity_sarees - sarees_made
+
+    def is_active(self):
+        return self.end_date is None
+
+    def __str__(self):
+        return f"Pagdi for {self.employee.name} ({self.capacity_sarees} sarees)"
+
+
+# ============================================================
+# ALERT EMAIL (for notifications)
+# ============================================================
+
+class AlertEmail(models.Model):
+    email = models.EmailField(unique=True)
+
+    def __str__(self):
+        return self.email
+
+
+# ============================================================
+# SALARY HISTORY (WEEKLY)
+# ============================================================
+
+class SalaryHistory(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="salary_history")
+    week_start = models.DateField(db_index=True)
+    week_end = models.DateField()
+    sarees = models.PositiveIntegerField(default=0)
+    salary_rate = models.PositiveIntegerField(default=0)
+    total_salary_before_advance = models.IntegerField(default=0)
+    advance_salary = models.IntegerField(default=0)
+    final_salary = models.IntegerField(default=0)
+    paid_status = models.BooleanField(default=False)
+    paid_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-week_start"]
+        unique_together = ("employee", "week_start", "week_end")
+        indexes = [models.Index(fields=["employee", "week_start"])]
+
+    def __str__(self):
+        return f"{self.employee.name} – {self.week_start} to {self.week_end}"
+
+
+# ============================================================
+# ADVANCE HISTORY (AUDIT LOG)
+# ============================================================
+
+class AdvanceHistory(models.Model):
+    ACTION_CHOICES = [
+        ("CLEAR", "Clear"),
+        ("CARRY", "Carry"),
+        ("ADJUST", "Adjust"),
+    ]
+
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="advance_history")
+    admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action_type = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    previous_amount = models.IntegerField()
+    new_amount = models.IntegerField()
+    note = models.TextField(blank=True)
+
+    # Timestamp
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["employee", "created_at"])]
+
+    def __str__(self):
+        return f"{self.employee.name} Advance {self.action_type} at {self.created_at}"
+
+
+# ============================================================
+# PAGDI CHANGE HISTORY (AUDIT LOG)
+# ============================================================
+
+class PagdiChangeHistory(models.Model):
+    pagdi = models.ForeignKey(PagdiHistory, null=True, blank=True, on_delete=models.SET_NULL, related_name="change_history")
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="pagdi_change_history")
+    admin_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50)
+    previous_capacity = models.IntegerField(null=True, blank=True)
+    new_capacity = models.IntegerField(null=True, blank=True)
+    previous_end_date = models.DateField(null=True, blank=True)
+    new_end_date = models.DateField(null=True, blank=True)
+    note = models.TextField(blank=True)
+
+    # Timestamp
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["employee", "created_at"])]
+
+    def __str__(self):
+        return f"{self.employee.name} Pagdi {self.action} at {self.created_at}"
+
+FILE END: core\models.py
+
+==================================================
+FILE START: core\services.py
+==================================================
+# core/services.py
+from django.db import transaction
+from django.db.models import Sum, F
+from django.utils import timezone
+from datetime import timedelta, date
+from typing import Optional, Tuple
+from django.contrib.auth.models import User
+
+from .models import (
+    Employee,
+    AdvanceHistory,
+    SalaryHistory,
+    SareeCount,
+    PagdiHistory,
+    PagdiChangeHistory,
+    WarpHistory,
+)
+
+"""
+Services module
+- Contains transactional business logic for advances, pagdi finishing,
+  weekly archival/reset, and carrying advances to next period.
+
+Design notes:
+- All mutating functions that affect money/advance fields use select_for_update()
+  and transaction.atomic() to prevent race conditions when multiple admins
+  operate concurrently.
+- Archive/reset is idempotent by checking existing SalaryHistory rows for the week.
+"""
+
+def get_week_bounds(for_date: Optional[date] = None) -> Tuple[date, date]:
+    """
+    Return (monday, sunday) for the week containing for_date (server local date).
+    """
+    if for_date is None:
+        for_date = timezone.localdate()
+    monday = for_date - timedelta(days=for_date.weekday())
+    sunday = monday + timedelta(days=6)
+    return monday, sunday
+
+
+@transaction.atomic
+def give_advance(employee_id: int, amount: int, admin_user: Optional[User] = None, note: str = "") -> AdvanceHistory:
+    """
+    Adds advance amount to employee.advance_salary (additive).
+    Creates AdvanceHistory record. Returns the history record.
+
+    Raises:
+      ValueError on invalid amount, Employee.DoesNotExist if employee missing.
+    """
+    if amount <= 0:
+        raise ValueError("amount must be a positive integer")
+
+    emp = Employee.objects.select_for_update().get(id=employee_id)
+    previous = int(emp.advance_salary or 0)
+    new_amount = previous + int(amount)
+    emp.advance_salary = new_amount
+    emp.save(update_fields=["advance_salary", "updated_at"])
+
+    ah = AdvanceHistory.objects.create(
+        employee=emp,
+        admin_user=admin_user,
+        action_type="ADJUST",
+        previous_amount=previous,
+        new_amount=new_amount,
+        note=note or f"Advance given: {amount}"
+    )
+    return ah
+
+
+@transaction.atomic
+def clear_advance_for_employee(employee_id: int, admin_user: Optional[User] = None, note: str = "") -> AdvanceHistory:
+    """
+    Clear advance (set to 0) for employee but **only** when intended.
+    Always create an AdvanceHistory record capturing previous and new values.
+    """
+    emp = Employee.objects.select_for_update().get(id=employee_id)
+    prev = int(emp.advance_salary or 0)
+    if prev == 0:
+        # still record the attempt for audit purposes (no-op clear)
+        ah = AdvanceHistory.objects.create(
+            employee=emp,
+            admin_user=admin_user,
+            action_type="CLEAR",
+            previous_amount=prev,
+            new_amount=0,
+            note=f"No-op clear: {note}"
+        )
+        return ah
+
+    emp.advance_salary = 0
+    emp.save(update_fields=["advance_salary", "updated_at"])
+    ah = AdvanceHistory.objects.create(
+        employee=emp,
+        admin_user=admin_user,
+        action_type="CLEAR",
+        previous_amount=prev,
+        new_amount=0,
+        note=note or "Cleared by admin"
+    )
+    return ah
+
+
+def compute_salary_for_employee_for_week(employee: Employee, week_start: date, week_end: date) -> dict:
+    """
+    Compute weekly salary numbers for an employee deterministically.
+    Returns a dict with keys:
+      sarees, salary_rate, total_before_advance, advance_applied, final_salary
+    """
+    sarees = SareeCount.objects.filter(employee=employee, date__gte=week_start, date__lte=week_end).aggregate(Sum("count"))["count__sum"] or 0
+    salary_rate = int(employee.salary_per_saree or 0)
+    total_before_advance = int(sarees) * salary_rate
+    advance_applied = int(employee.advance_salary or 0)
+    final = total_before_advance - advance_applied
+    return {
+        "sarees": int(sarees),
+        "salary_rate": salary_rate,
+        "total_before_advance": total_before_advance,
+        "advance_applied": advance_applied,
+        "final_salary": final,
+    }
+
+
+@transaction.atomic
+def archive_and_reset_weekly_salaries(for_date: Optional[date] = None, admin_user: Optional[User] = None, notes: str = "") -> int:
+    """
+    Archive this week's salaries into SalaryHistory and zero 'current_week_salary' per-employee.
+    Idempotent: skips employees for whom a SalaryHistory record for the same week already exists.
+    Returns number of SalaryHistory rows created.
+
+    Important behavior:
+    - This function **does not** modify employee.advance_salary. Advances are carried by default;
+      clearing advances should be an explicit admin action and will be recorded in AdvanceHistory.
+    """
+    monday, sunday = (get_week_bounds(for_date) if for_date else get_week_bounds())
+    created = 0
+
+    # Lock employees to prevent concurrent changes to advance_salary/current_week_salary during archiving.
+    employees = Employee.objects.select_for_update().all()
+
+    for emp in employees:
+        # Skip if already archived for this week (idempotent)
+        exists = SalaryHistory.objects.filter(employee=emp, week_start=monday, week_end=sunday).exists()
+        if exists:
+            # ensure live field is zeroed if leftover
+            if emp.current_week_salary != 0:
+                emp.current_week_salary = 0
+                emp.save(update_fields=["current_week_salary", "updated_at"])
+            continue
+
+        numbers = compute_salary_for_employee_for_week(emp, monday, sunday)
+        SalaryHistory.objects.create(
+            employee=emp,
+            week_start=monday,
+            week_end=sunday,
+            sarees=numbers["sarees"],
+            salary_rate=numbers["salary_rate"],
+            total_salary_before_advance=numbers["total_before_advance"],
+            advance_salary=numbers["advance_applied"],
+            final_salary=numbers["final_salary"],
+            paid_status=False,
+            paid_date=None,
+            notes=notes or f"Archived by scheduled reset on {timezone.localdate()}",
+        )
+        # zero the live running aggregate
+        emp.current_week_salary = 0
+        emp.save(update_fields=["current_week_salary", "updated_at"])
+        created += 1
+
+    return created
+
+
+@transaction.atomic
+def finish_pagdi(pagdi_id: int, admin_user: Optional[User] = None, note: str = "") -> PagdiHistory:
+    """
+    Finish a PagdiHistory (set end_date to today) and create a PagdiChangeHistory row.
+    Uses select_for_update on the PagdiHistory record.
+    """
+    p = PagdiHistory.objects.select_for_update().get(id=pagdi_id)
+    prev_end = p.end_date
+    p.end_date = timezone.localdate()
+    p.save(update_fields=["end_date"])
+    PagdiChangeHistory.objects.create(
+        pagdi=p,
+        employee=p.employee,
+        admin_user=admin_user,
+        action="FINISH",
+        previous_capacity=p.capacity_sarees,
+        new_capacity=p.capacity_sarees,
+        previous_end_date=prev_end,
+        new_end_date=p.end_date,
+        note=note or "Finished via admin/service"
+    )
+    return p
+
+
+@transaction.atomic
+def carry_advances_to_next_week(carry_factor: float = 1.0, admin_user: Optional[User] = None, note: str = "") -> int:
+    """
+    Carry outstanding advances to next week.
+
+    carry_factor: fraction of outstanding advance to carry (1.0 => carry full amount, 0.0 => zero out).
+                  Values between 0 and 1 will reduce the advance accordingly.
+                  Values >1 will increase the advance (rare but allowed).
+
+    Behavior:
+    - For each employee with advance_salary != 0, lock the row, compute new_amount = int(prev * carry_factor).
+    - Save new_amount back to employee.advance_salary.
+    - Create an AdvanceHistory record with action_type="CARRY".
+    - Returns the number of processed employees (rows changed or recorded as no-op when factor == 1.0).
+
+    Idempotency note:
+    - If carried with same factor repeatedly, the new_amount will keep changing (as intended).
+    - The function always creates an audit row for each employee processed so admins have a clear trail.
+
+    Raises:
+      ValueError if carry_factor is negative.
+    """
+    if carry_factor < 0:
+        raise ValueError("carry_factor must be non-negative")
+
+    processed = 0
+
+    # Lock employees to avoid races with give/clear operations.
+    qs = Employee.objects.select_for_update().all()
+    for emp in qs:
+        prev = int(emp.advance_salary or 0)
+        # We will still record a history entry even if prev == 0 (no-op) so audits show an attempted carry.
+        if prev == 0:
+            AdvanceHistory.objects.create(
+                employee=emp,
+                admin_user=admin_user,
+                action_type="CARRY",
+                previous_amount=0,
+                new_amount=0,
+                note=f"No-op carry: {note}" if note else "No outstanding advance to carry"
+            )
+            processed += 1
+            continue
+
+        # compute new carried amount (rounding -> int)
+        new_amount = int(prev * float(carry_factor))
+        # Enforce non-negative (sanity)
+        if new_amount < 0:
+            new_amount = 0
+
+        # Avoid unnecessary writes if identical
+        if new_amount != prev:
+            emp.advance_salary = new_amount
+            emp.save(update_fields=["advance_salary", "updated_at"])
+        else:
+            # if unchanged, still proceed to create audit entry
+            pass
+
+        AdvanceHistory.objects.create(
+            employee=emp,
+            admin_user=admin_user,
+            action_type="CARRY",
+            previous_amount=prev,
+            new_amount=new_amount,
+            note=note or f"Carried with factor {carry_factor}"
+        )
+        processed += 1
+
+    return processed
+
+FILE END: core\services.py
+
+==================================================
+FILE START: core\tests.py
+==================================================
+from django.test import TestCase
+
+# Create your tests here.
+
+FILE END: core\tests.py
+
+==================================================
+FILE START: core\views.py
+==================================================
+from django.shortcuts import render
+
+# Create your views here.
+
+FILE END: core\views.py
+
+==================================================
+FILE START: core\__init__.py
+==================================================
+
+FILE END: core\__init__.py
+
+==================================================
+FILE START: core\management\commands\carry_advance.py
+==================================================
+# core/management/commands/carry_advance.py
+from django.core.management.base import BaseCommand
+from core import services
+from django.db import transaction
+
+class Command(BaseCommand):
+    help = "Carry outstanding advances to next week (audit each change)."
+
+    def add_arguments(self, parser):
+        parser.add_argument("--factor", type=float, default=1.0, help="Carry factor: fraction of outstanding advance to carry (1.0 => full).")
+        parser.add_argument("--dry-run", action="store_true", help="Don't write changes; just report how many would be processed.")
+        parser.add_argument("--note", type=str, default="", help="Optional note to store in AdvanceHistory entries.")
+
+    def handle(self, *args, **options):
+        factor = options.get("factor", 1.0)
+        dry = options.get("dry_run", False)
+        note = options.get("note", "")
+
+        if dry:
+            # Safe dry-run: run inside a transaction and rollback at the end.
+            self.stdout.write(self.style.NOTICE("DRY RUN: no DB writes will be performed. Performing simulated run..."))
+            try:
+                with transaction.atomic():
+                    processed = services.carry_advances_to_next_week(carry_factor=factor, admin_user=None, note=note)
+                    # Rollback by raising a controlled exception to undo writes.
+                    raise RuntimeError("DRY_RUN_ROLLBACK")
+            except RuntimeError as e:
+                if str(e) == "DRY_RUN_ROLLBACK":
+                    self.stdout.write(self.style.SUCCESS(f"DRY RUN: would process approximately {processed} employees. (No DB changes committed)"))
+                    return
+                raise
+        else:
+            processed = services.carry_advances_to_next_week(carry_factor=factor, admin_user=None, note=note)
+            self.stdout.write(self.style.SUCCESS(f"Processed {processed} advances (carry_factor={factor})."))
+
+FILE END: core\management\commands\carry_advance.py
+
+==================================================
+FILE START: core\management\commands\reset_weekly_salary.py
+==================================================
+# core/management/commands/reset_weekly_salary.py
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+from core import services
+from django.db import transaction
+
+class Command(BaseCommand):
+    help = "Archive this week's salaries into SalaryHistory and reset live running payroll fields (idempotent)."
+
+    def add_arguments(self, parser):
+        parser.add_argument("--date", type=str, help="Date (YYYY-MM-DD) to use to compute the week. Defaults to today.")
+        parser.add_argument("--note", type=str, help="Optional note to store in SalaryHistory notes", default="Weekly automated reset")
+        parser.add_argument("--dry-run", action="store_true", help="Don't write any changes, just report counts")
+
+    def handle(self, *args, **options):
+        note = options.get("note", "")
+        dry = options.get("dry_run", False)
+        date_arg = options.get("date", None)
+        if date_arg:
+            from datetime import datetime
+            use_date = datetime.strptime(date_arg, "%Y-%m-%d").date()
+        else:
+            use_date = None
+
+        if dry:
+            self.stdout.write(self.style.NOTICE("DRY RUN: no DB writes will be performed. Computing changes..."))
+            try:
+                with transaction.atomic():
+                    created = services.archive_and_reset_weekly_salaries(for_date=use_date, admin_user=None, notes=note)
+                    # rollback by raising a sentinel to avoid committing
+                    raise RuntimeError("DRY_RUN_ROLLBACK")
+            except RuntimeError as e:
+                if str(e) == "DRY_RUN_ROLLBACK":
+                    self.stdout.write(self.style.SUCCESS(f"DRY RUN: would create {created} SalaryHistory rows (no DB changes)."))
+                    return
+                raise
+        else:
+            created = services.archive_and_reset_weekly_salaries(for_date=use_date, admin_user=None, notes=note)
+            self.stdout.write(self.style.SUCCESS(f"Archived and reset weekly salaries. SalaryHistory rows created: {created}"))
+
+FILE END: core\management\commands\reset_weekly_salary.py
+
+==================================================
+FILE START: core\migrations\0001_initial.py
+==================================================
+# Generated by Django 5.2.8 on 2025-11-25 18:45
+
+import django.db.models.deletion
+from django.conf import settings
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='AlertEmail',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('email', models.EmailField(max_length=254, unique=True)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Employee',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('name', models.CharField(max_length=100)),
+                ('phone', models.CharField(max_length=15)),
+                ('profile_picture', models.ImageField(blank=True, null=True, upload_to='profile_pics/')),
+                ('joining_date', models.DateField(auto_now_add=True)),
+                ('pagdi_thread_1', models.IntegerField(default=0)),
+                ('pagdi_thread_2', models.IntegerField(default=0)),
+                ('warp_threads', models.IntegerField(default=0)),
+                ('salary_per_saree', models.IntegerField(default=0)),
+                ('advance_salary', models.IntegerField(default=0)),
+                ('performance', models.CharField(default='Average', max_length=20)),
+                ('is_approved', models.BooleanField(default=False)),
+                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'ordering': ['name'],
+            },
+        ),
+        migrations.CreateModel(
+            name='PagdiHistory',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('start_date', models.DateField()),
+                ('end_date', models.DateField(blank=True, null=True)),
+                ('capacity_sarees', models.IntegerField(default=0)),
+                ('notes', models.TextField(blank=True)),
+                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.employee')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='WarpHistory',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('start_date', models.DateField()),
+                ('end_date', models.DateField(blank=True, null=True)),
+                ('capacity_sarees', models.IntegerField(default=0)),
+                ('notes', models.TextField(blank=True)),
+                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.employee')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='SalaryHistory',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('week_start', models.DateField()),
+                ('week_end', models.DateField()),
+                ('sarees', models.IntegerField(default=0)),
+                ('salary_rate', models.IntegerField(default=0)),
+                ('total_salary_before_advance', models.IntegerField(default=0)),
+                ('advance_salary', models.IntegerField(default=0)),
+                ('final_salary', models.IntegerField(default=0)),
+                ('paid_status', models.BooleanField(default=False)),
+                ('paid_date', models.DateField(blank=True, null=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.employee')),
+            ],
+            options={
+                'ordering': ['-week_start'],
+                'unique_together': {('employee', 'week_start', 'week_end')},
+            },
+        ),
+        migrations.CreateModel(
+            name='SareeCount',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('date', models.DateField()),
+                ('count', models.PositiveIntegerField(default=0)),
+                ('notes', models.TextField(blank=True, null=True)),
+                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='core.employee')),
+            ],
+            options={
+                'ordering': ['-date'],
+                'unique_together': {('employee', 'date')},
+            },
+        ),
+    ]
+
+FILE END: core\migrations\0001_initial.py
+
+==================================================
+FILE START: core\migrations\0002_add_employee_timestamps.py
+==================================================
+from django.db import migrations, models
+from django.utils import timezone
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('core', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name='employee',
+            name='created_at',
+            field=models.DateTimeField(default=timezone.now),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='employee',
+            name='updated_at',
+            field=models.DateTimeField(default=timezone.now),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='employee',
+            name='current_week_salary',
+            field=models.IntegerField(default=0),
+        ),
+        migrations.AddField(
+            model_name='salaryhistory',
+            name='notes',
+            field=models.TextField(blank=True, default=""),
+            preserve_default=False,
+        ),
+    ]
+
+FILE END: core\migrations\0002_add_employee_timestamps.py
+
+==================================================
+FILE START: core\migrations\0003_create_audit_models.py
+==================================================
+from django.db import migrations, models
+import django.db.models.deletion
+from django.conf import settings
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('core', '0002_add_employee_timestamps'),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='AdvanceHistory',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('action_type', models.CharField(max_length=10, choices=[('CLEAR', 'Clear'), ('CARRY', 'Carry'), ('ADJUST', 'Adjust')])),
+                ('previous_amount', models.IntegerField()),
+                ('new_amount', models.IntegerField()),
+                ('note', models.TextField(blank=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('admin_user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='advance_history', to='core.employee')),
+            ],
+            options={
+                'ordering': ['-created_at'],
+            },
+        ),
+
+        migrations.CreateModel(
+            name='PagdiChangeHistory',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('action', models.CharField(max_length=50)),
+                ('previous_capacity', models.IntegerField(null=True, blank=True)),
+                ('new_capacity', models.IntegerField(null=True, blank=True)),
+                ('previous_end_date', models.DateField(null=True, blank=True)),
+                ('new_end_date', models.DateField(null=True, blank=True)),
+                ('note', models.TextField(blank=True)),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('admin_user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+                ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='pagdi_change_history', to='core.employee')),
+                ('pagdi', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='change_history', to='core.pagdihistory')),
+            ],
+            options={
+                'ordering': ['-created_at'],
+            },
+        ),
+    ]
+
+FILE END: core\migrations\0003_create_audit_models.py
+
+==================================================
+FILE START: core\migrations\0004_backfill_salary_notes.py
+==================================================
+from django.db import migrations
+
+
+def backfill_notes(apps, schema_editor):
+    SalaryHistory = apps.get_model('core', 'SalaryHistory')
+    for row in SalaryHistory.objects.all():
+        if not row.notes:
+            row.notes = "Backfilled by migration"
+            row.save(update_fields=['notes'])
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('core', '0003_create_audit_models'),
+    ]
+
+    operations = [
+        migrations.RunPython(backfill_notes, reverse_code=migrations.RunPython.noop),
+    ]
+
+FILE END: core\migrations\0004_backfill_salary_notes.py
+
+==================================================
+FILE START: core\migrations\0005_alter_pagdihistory_options_alter_warphistory_options_and_more.py
+==================================================
+# Generated by Django 5.2.8 on 2025-11-30 06:47
+
+import django.core.validators
+import django.db.models.deletion
+from django.conf import settings
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('core', '0004_backfill_salary_notes'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
+    ]
+
+    operations = [
+        migrations.AlterModelOptions(
+            name='pagdihistory',
+            options={'ordering': ['-start_date']},
+        ),
+        migrations.AlterModelOptions(
+            name='warphistory',
+            options={'ordering': ['-start_date']},
+        ),
+        migrations.AlterField(
+            model_name='employee',
+            name='advance_salary',
+            field=models.PositiveIntegerField(default=0, validators=[django.core.validators.MinValueValidator(0)]),
+        ),
+        migrations.AlterField(
+            model_name='employee',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True),
+        ),
+        migrations.AlterField(
+            model_name='employee',
+            name='phone',
+            field=models.CharField(db_index=True, max_length=15),
+        ),
+        migrations.AlterField(
+            model_name='employee',
+            name='salary_per_saree',
+            field=models.PositiveIntegerField(default=0, validators=[django.core.validators.MinValueValidator(0)]),
+        ),
+        migrations.AlterField(
+            model_name='employee',
+            name='updated_at',
+            field=models.DateTimeField(auto_now=True),
+        ),
+        migrations.AlterField(
+            model_name='employee',
+            name='user',
+            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='employee', to=settings.AUTH_USER_MODEL),
+        ),
+        migrations.AlterField(
+            model_name='pagdihistory',
+            name='capacity_sarees',
+            field=models.PositiveIntegerField(default=0),
+        ),
+        migrations.AlterField(
+            model_name='pagdihistory',
+            name='employee',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='pagdi_history', to='core.employee'),
+        ),
+        migrations.AlterField(
+            model_name='salaryhistory',
+            name='employee',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='salary_history', to='core.employee'),
+        ),
+        migrations.AlterField(
+            model_name='salaryhistory',
+            name='salary_rate',
+            field=models.PositiveIntegerField(default=0),
+        ),
+        migrations.AlterField(
+            model_name='salaryhistory',
+            name='sarees',
+            field=models.PositiveIntegerField(default=0),
+        ),
+        migrations.AlterField(
+            model_name='salaryhistory',
+            name='week_start',
+            field=models.DateField(db_index=True),
+        ),
+        migrations.AlterField(
+            model_name='sareecount',
+            name='date',
+            field=models.DateField(db_index=True),
+        ),
+        migrations.AlterField(
+            model_name='sareecount',
+            name='employee',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='saree_counts', to='core.employee'),
+        ),
+        migrations.AlterField(
+            model_name='warphistory',
+            name='capacity_sarees',
+            field=models.PositiveIntegerField(default=0),
+        ),
+        migrations.AlterField(
+            model_name='warphistory',
+            name='employee',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='warp_history', to='core.employee'),
+        ),
+        migrations.AddIndex(
+            model_name='advancehistory',
+            index=models.Index(fields=['employee', 'created_at'], name='core_advanc_employe_74bb60_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='employee',
+            index=models.Index(fields=['phone'], name='core_employ_phone_f66745_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='pagdichangehistory',
+            index=models.Index(fields=['employee', 'created_at'], name='core_pagdic_employe_a8b9db_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='salaryhistory',
+            index=models.Index(fields=['employee', 'week_start'], name='core_salary_employe_0cbafe_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='sareecount',
+            index=models.Index(fields=['employee', 'date'], name='core_sareec_employe_99f97d_idx'),
+        ),
+    ]
+
+FILE END: core\migrations\0005_alter_pagdihistory_options_alter_warphistory_options_and_more.py
+
+==================================================
+FILE START: core\migrations\0006_advancehistory_updated_at_and_more.py
+==================================================
+# Generated by Django 5.2.8 on 2025-12-04 17:23
+
+import django.utils.timezone
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('core', '0005_alter_pagdihistory_options_alter_warphistory_options_and_more'),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name='advancehistory',
+            name='updated_at',
+            field=models.DateTimeField(auto_now=True),
+        ),
+        migrations.AddField(
+            model_name='pagdichangehistory',
+            name='updated_at',
+            field=models.DateTimeField(auto_now=True),
+        ),
+        migrations.AddField(
+            model_name='pagdihistory',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='pagdihistory',
+            name='updated_at',
+            field=models.DateTimeField(auto_now=True),
+        ),
+        migrations.AddField(
+            model_name='salaryhistory',
+            name='updated_at',
+            field=models.DateTimeField(auto_now=True),
+        ),
+        migrations.AddField(
+            model_name='sareecount',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='sareecount',
+            name='updated_at',
+            field=models.DateTimeField(auto_now=True),
+        ),
+        migrations.AddField(
+            model_name='warphistory',
+            name='created_at',
+            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='warphistory',
+            name='updated_at',
+            field=models.DateTimeField(auto_now=True),
+        ),
+        migrations.AlterField(
+            model_name='pagdihistory',
+            name='notes',
+            field=models.TextField(blank=True, null=True),
+        ),
+        migrations.AlterField(
+            model_name='warphistory',
+            name='notes',
+            field=models.TextField(blank=True, null=True),
+        ),
+    ]
+
+FILE END: core\migrations\0006_advancehistory_updated_at_and_more.py
+
+==================================================
+FILE START: core\migrations\__init__.py
+==================================================
+
+FILE END: core\migrations\__init__.py
+
+==================================================
+FILE START: core\templatetags\multiply.py
+==================================================
+from django import template
+register = template.Library()
+
+@register.filter
+def multiply(a, b):
+    try:
+        return int(a) * int(b)
+    except:
+        return 0
+
+
+@register.filter
+def div(a, b):
+    try:
+        return float(a) / float(b)
+    except:
+        return 0
+
+@register.filter
+def mul(a, b):
+    try:
+        return float(a) * float(b)
+    except:
+        return 0
+
+# core/templatetags/multiply.py
+from django import template
+
+register = template.Library()
+
+@register.filter
+def multiply(a, b):
+    """Legacy name used in templates: multiply"""
+    try:
+        return int(a) * int(b)
+    except Exception:
+        try:
+            return float(a) * float(b)
+        except Exception:
+            return 0
+
+# alias: mul for readability in templates
+@register.filter
+def mul(a, b):
+    try:
+        return float(a) * float(b)
+    except Exception:
+        return 0.0
+
+@register.filter
+def div(a, b):
+    try:
+        a_f = float(a)
+        b_f = float(b)
+        return a_f / b_f if b_f != 0 else 0.0
+    except Exception:
+        return 0.0
+
+@register.filter
+def sub(a, b):
+    try:
+        return float(a) - float(b)
+    except Exception:
+        return 0.0
+
+# convenience: percentage of a/b * 100
+@register.filter
+def pct(a, b):
+    """Return (a / b) * 100 (0..100)."""
+    try:
+        a_f = float(a)
+        b_f = float(b)
+        return (a_f / b_f) * 100.0 if b_f != 0 else 0.0
+    except Exception:
+        return 0.0
+
+FILE END: core\templatetags\multiply.py
+
+==================================================
+FILE START: core\tests\test_advance_and_reset.py
+==================================================
+# core/tests/test_advance_and_reset.py
+from django.test import TestCase
+from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import date, timedelta
+
+from core.models import Employee, SareeCount, SalaryHistory, AdvanceHistory
+from core import services
+
+class AdvanceAndResetTests(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="emp1", password="pw")
+        self.emp = Employee.objects.create(user=self.user, name="E1", phone="9999", salary_per_saree=10, advance_salary=50, is_approved=True)
+
+    def test_clear_advance_creates_history_and_sets_zero(self):
+        self.assertEqual(self.emp.advance_salary, 50)
+        ah = services.clear_advance_for_employee(self.emp.id, admin_user=None, note="test clear")
+        self.emp.refresh_from_db()
+        self.assertEqual(self.emp.advance_salary, 0)
+        self.assertIsInstance(ah, AdvanceHistory)
+        self.assertEqual(ah.previous_amount, 50)
+        self.assertEqual(ah.new_amount, 0)
+
+    def test_carry_advance_does_not_zero_incorrectly(self):
+        # create second employee with some advance
+        user2 = User.objects.create_user(username="emp2", password="pw")
+        emp2 = Employee.objects.create(user=user2, name="E2", phone="8888", salary_per_saree=20, advance_salary=30, is_approved=True)
+        processed = services.carry_advances_to_next_week(carry_factor=1.0, admin_user=None, note="carry test")
+        self.assertGreaterEqual(processed, 1)
+        emp2.refresh_from_db()
+        # carry factor 1.0 should leave amount unchanged
+        self.assertEqual(emp2.advance_salary, 30)
+        # also AdvanceHistory entry exists
+        self.assertTrue(emp2.advance_history.exists())
+
+    def test_reset_weekly_salary_is_idempotent_and_creates_history(self):
+        # create some saree counts for this week
+        today = timezone.localdate()
+        monday, sunday = services.get_week_bounds(today)
+        SareeCount.objects.create(employee=self.emp, date=monday, count=3)
+        SareeCount.objects.create(employee=self.emp, date=monday + timedelta(days=1), count=2)
+
+        created_first = services.archive_and_reset_weekly_salaries(for_date=today, admin_user=None, notes="test reset")
+        self.assertEqual(created_first, 1)
+        self.assertTrue(SalaryHistory.objects.filter(employee=self.emp, week_start=monday, week_end=sunday).exists())
+        # calling again should not create duplicate rows, due to unique_together check
+        created_second = services.archive_and_reset_weekly_salaries(for_date=today, admin_user=None, notes="test reset")
+        self.assertEqual(created_second, 0)  # idempotent
+
+FILE END: core\tests\test_advance_and_reset.py
