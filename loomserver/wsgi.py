@@ -1,6 +1,3 @@
-"""
-WSGI config for loomserver project.
-"""
 import os
 from django.core.wsgi import get_wsgi_application
 
@@ -14,3 +11,5 @@ try:
     create_default_superuser()
 except Exception as e:
     print("⚠ Auto-admin creation skipped:", e)
+
+    

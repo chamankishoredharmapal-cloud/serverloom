@@ -1,5 +1,12 @@
 env/
-staticfiles/
-*.db
+venv/
+__pycache__/
+*.pyc
+db.sqlite3
 *.sqlite3
-*.sql
+.env
+.env.local
+credentials.json
+service_account.json
+*.log
+/staticfiles/

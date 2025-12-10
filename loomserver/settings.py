@@ -4,23 +4,22 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ==============================================================
-# BASIC SETTINGS
+# ==============================================================  
+# BASIC SETTINGS  
 # ==============================================================
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
-
 DEBUG = False
 
 ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
     os.environ.get("RENDER_EXTERNAL_HOSTNAME"),
     ".onrender.com",
-    "localhost",
 ]
 
-
-# ==============================================================
-# INSTALLED APPS
+# ==============================================================  
+# INSTALLED APPS  
 # ==============================================================
 
 INSTALLED_APPS = [
@@ -40,14 +39,13 @@ INSTALLED_APPS = [
     "core",
 ]
 
-
-# ==============================================================
-# MIDDLEWARE
+# ==============================================================  
+# MIDDLEWARE  
 # ==============================================================
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",   # REQUIRED FOR STATIC FILES ON RENDER
+    "whitenoise.middleware.WhiteNoiseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -57,18 +55,15 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-
-# ==============================================================
-# URLS / WSGI
+# ==============================================================  
+# URLS / WSGI  
 # ==============================================================
 
 ROOT_URLCONF = "loomserver.urls"
-
 WSGI_APPLICATION = "loomserver.wsgi.application"
 
-
-# ==============================================================
-# DATABASE CONFIG (Render)
+# ==============================================================  
+# DATABASE (Render)  
 # ==============================================================
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -78,11 +73,10 @@ if DATABASE_URL:
         "default": dj_database_url.parse(
             DATABASE_URL,
             conn_max_age=600,
-            ssl_require=True
+            ssl_require=True,
         )
     }
 else:
-    # FALLBACK for local development
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -90,9 +84,8 @@ else:
         }
     }
 
-
-# ==============================================================
-# TEMPLATES
+# ==============================================================  
+# TEMPLATES  
 # ==============================================================
 
 TEMPLATES = [
@@ -111,29 +104,19 @@ TEMPLATES = [
     },
 ]
 
-
-# ==============================================================
-# PASSWORD VALIDATION
+# ==============================================================  
+# PASSWORD VALIDATION  
 # ==============================================================
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-
-# ==============================================================
-# INTERNATIONALIZATION
+# ==============================================================  
+# INTERNATIONALIZATION  
 # ==============================================================
 
 LANGUAGE_CODE = "en-us"
@@ -141,28 +124,21 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
-
-# ==============================================================
-# STATIC & MEDIA CONFIG
+# ==============================================================  
+# STATIC & MEDIA  
 # ==============================================================
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = [
-    BASE_DIR / "static",   # required for admin & any custom tailwind files
+    BASE_DIR / "static",
 ]
 
-# Whitenoise (very important)
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-
-# --------------------------
-# MEDIA via Cloudinary
-# --------------------------
-
+# Cloudinary media
 MEDIA_URL = "/media/"
-
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 CLOUDINARY_STORAGE = {
@@ -170,10 +146,5 @@ CLOUDINARY_STORAGE = {
     "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
     "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
 }
-
-
-# ==============================================================
-# DEFAULT PRIMARY KEY TYPE
-# ==============================================================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
