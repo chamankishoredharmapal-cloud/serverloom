@@ -4,23 +4,24 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ==============================================================  
-# BASIC SETTINGS  
-# ==============================================================
+# ===============================
+# CORE SETTINGS
+# ===============================
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "unsafe-secret-key")
-DEBUG = False
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    os.environ.get("RENDER_EXTERNAL_HOSTNAME"),
     ".onrender.com",
+    os.environ.get("RENDER_EXTERNAL_HOSTNAME"),
 ]
 
-# ==============================================================  
-# INSTALLED APPS  
-# ==============================================================
+
+# ===============================
+# INSTALLED APPS
+# ===============================
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -39,9 +40,10 @@ INSTALLED_APPS = [
     "core",
 ]
 
-# ==============================================================  
-# MIDDLEWARE  
-# ==============================================================
+
+# ===============================
+# MIDDLEWARE
+# ===============================
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -55,16 +57,18 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# ==============================================================  
-# URLS / WSGI  
-# ==============================================================
+
+# ===============================
+# PATHS / URLS
+# ===============================
 
 ROOT_URLCONF = "loomserver.urls"
 WSGI_APPLICATION = "loomserver.wsgi.application"
 
-# ==============================================================  
-# DATABASE (Render)  
-# ==============================================================
+
+# ===============================
+# DATABASES
+# ===============================
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -84,9 +88,10 @@ else:
         }
     }
 
-# ==============================================================  
-# TEMPLATES  
-# ==============================================================
+
+# ===============================
+# TEMPLATES
+# ===============================
 
 TEMPLATES = [
     {
@@ -104,29 +109,29 @@ TEMPLATES = [
     },
 ]
 
-# ==============================================================  
-# PASSWORD VALIDATION  
-# ==============================================================
+
+# ===============================
+# PASSWORD VALIDATION
+# ===============================
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# ==============================================================  
-# INTERNATIONALIZATION  
-# ==============================================================
+# ===============================
+# LANGUAGE / TIMEZONE
+# ===============================
 
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
+
 USE_I18N = True
 USE_TZ = True
 
-# ==============================================================  
-# STATIC & MEDIA  
-# ==============================================================
+
+# ===============================
+# STATIC FILES (Render + local)
+# ===============================
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -137,8 +142,13 @@ STATICFILES_DIRS = [
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Cloudinary media
+
+# ===============================
+# MEDIA (Cloudinary)
+# ===============================
+
 MEDIA_URL = "/media/"
+
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 CLOUDINARY_STORAGE = {
@@ -146,5 +156,10 @@ CLOUDINARY_STORAGE = {
     "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
     "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
 }
+
+
+# ===============================
+# AUTO FIELD
+# ===============================
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
