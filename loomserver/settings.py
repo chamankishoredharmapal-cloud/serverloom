@@ -4,16 +4,24 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
-DEBUG = False
+# ===========================
+# SECURITY
+# ===========================
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     os.environ.get("RAILWAY_PUBLIC_DOMAIN"),
+    os.environ.get("RENDER_EXTERNAL_HOSTNAME"),
     "*"
 ]
 
+
+# ===========================
+# APPS
+# ===========================
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -29,9 +37,13 @@ INSTALLED_APPS = [
     "core",
 ]
 
+
+# ===========================
+# MIDDLEWARE
+# ===========================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # required
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -40,10 +52,14 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+
 ROOT_URLCONF = "loomserver.urls"
 WSGI_APPLICATION = "loomserver.wsgi.application"
 
-# DATABASE
+
+# ===========================
+# DATABASE (Railway)
+# ===========================
 DATABASES = {
     "default": dj_database_url.parse(
         os.environ.get("DATABASE_URL"),
@@ -52,7 +68,10 @@ DATABASES = {
     )
 }
 
+
+# ===========================
 # TEMPLATES
+# ===========================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -69,15 +88,22 @@ TEMPLATES = [
     },
 ]
 
-# STATIC
+
+# ===========================
+# STATIC / WHITENOISE
+# ===========================
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]   # your local static folder
+STATIC_ROOT = BASE_DIR / "staticfiles"     # Railway collects here
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# MEDIA via Cloudinary
+
+# ===========================
+# MEDIA / CLOUDINARY
+# ===========================
 MEDIA_URL = "/media/"
+
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 CLOUDINARY_STORAGE = {
@@ -86,4 +112,8 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
 }
 
+
+# ===========================
+# DEFAULTS
+# ===========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
