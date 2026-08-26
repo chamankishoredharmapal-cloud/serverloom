@@ -1,0 +1,30 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Saree Entry{% endblock %}
+{% block header %}Saree Entry{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow max-w-lg">
+  <form method="POST">
+    {% csrf_token %}
+
+    <label class="block font-semibold mb-1">Employee</label>
+    <select name="employee" class="w-full border p-2 rounded mb-4">
+      {% for e in employees %}
+      <option value="{{ e.id }}">{{ e.name }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="block font-semibold mb-1">Date</label>
+    <input type="date" name="date" class="w-full border p-2 rounded mb-4">
+
+    <label class="block font-semibold mb-1">Count</label>
+    <input type="number" name="count" class="w-full border p-2 rounded mb-4">
+
+    <label class="block font-semibold mb-1">Notes</label>
+    <input type="text" name="notes" class="w-full border p-2 rounded mb-4">
+
+    <button class="bg-green-600 text-white px-4 py-2 rounded">Save Entry</button>
+  </form>
+</div>
+{% endblock %}

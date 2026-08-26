@@ -1,0 +1,17 @@
+# PHASE_10_RECONCILIATION.md (Phase 10.16)
+
+Fresh independent challenge against the 44-check runtime run + prior-phase authority. Contradiction candidates investigated to closure; none averaged, none silently fixed.
+
+| # | Candidate contradiction | Evidence | Authority | Final determination |
+| - | ----------------------- | -------- | --------- | ------------------- |
+| C-01 | Phase 8 says DB-enforced one-ACTIVE "regardless of caller" — could a race produce two? | partial unique index + 3-way parallel assign probe → exactly ONE ACTIVE | Phase 6 BR-009 / CONSTRAINT C-03 | NO CONTRADICTION — invariant held under every interleaving attempted |
+| C-02 | Approval race emitted TWO APPROVE events in one run, ONE in another | both runs logged (superuser-bypass session vs client-role session); state converged ACTIVE either way | Phase 6 SM-01 requires idempotent approve; audit spec wants faithful transition record | **FINDING F-RACE01 (P3):** duplicate APPROVE audit event possible under concurrent approvals due to read-then-write guard outside a conditional update. Data integrity unaffected; audit fidelity degrades only in this rare interleaving. Management-V1 fix path (later phase): `UPDATE … WHERE status<>'ACTIVE'` + emit on rowcount, inside same tx. NOT FIXED during verification per rules |
+| C-03 | Export Sheet4 dates verbose ("Mon Aug 24 …") vs REP spec ISO dates | SHEET4 DUMP cell values are strings produced by `String(pgDate)` in route formatter | Phase 6 REPORT_EXPORT (date columns) | **FINDING F-EXP01 (P3):** values correct, formatting wrong. Formatter-only fix later; verification recorded unfixed |
+| C-04 | EXP-03 expected 225 but stored/exported 263 | archive #2 legitimately refreshed advance snapshot to balance-at-archive-time (37) per CALC-006 live-full-balance rule: 25×12−37=263 | Phase 6 CALC-006/CALC-007 | NO CONTRADICTION — initial expectation was stale; corrected independent math matches system exactly (44/44 final run) |
+| C-05 | Security architecture demands employee isolation — proven? | RLS via Supabase-contract shim: A saw ZERO of B's rows; direct SQL insert denied by grant floor before policies even evaluate | Phase 7 X-02 | CONSISTENT — isolation holds at database layer, not merely UI |
+| C-06 | Audit spec says every mutation logged — any unlogged mutation found? | event catalog cross-checked per RPC during scenario (38→trails grew with each action); ARCHIVE_RUN rows counted | AUD63 series | NONE FOUND |
+| C-07 | Archive says payment preserved — verify against refresh semantics | paid/paid_on survived quantity-only refresh twice (SM-04 ★) | BR-016/C-08 | CONSISTENT |
+| C-08 | Phase 9 marked JWT↔RLS "NOT VERIFIED" — does Phase 10 change that? | claims-based verification ran against the auth-schema CONTRACT shim on vanilla PG (auth.uid() from GUCs), not against cloud-issued JWTs | Phase 7 SECURITY §1 | PARTIAL improvement: policy/RPC enforcement now RUNTIME-VERIFIED at contract level; cloud issuance/provider policies remain NOT VERIFIED (environment constraint, honestly retained) |
+| C-09 | Superuser-bypass escape hatch weakens authorization? | hatch requires `rolsupersession_user`; Supabase client roles can never satisfy it; production behavior unaffected — but it DID mask claim-paths in early P10 runs until non-superuser client was used | Phase 9 ADR intent | DOCUMENTED TEST-AFFORDANCE — recommend narrowing to explicit GUC flag in a later hardening pass (P4 note) |
+
+Contradictions requiring escalation: **0** · Findings carried forward: F-RACE01 (P3), F-EXP01 (P3), C-09 note (P4).

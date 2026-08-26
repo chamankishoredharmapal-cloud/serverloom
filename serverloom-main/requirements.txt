@@ -1,0 +1,12 @@
+Django==5.2.8
+gunicorn==21.2.0
+dj-database-url==1.2.0
+whitenoise==6.6.0
+cloudinary==1.36.0
+django-cloudinary-storage==0.3.0
+python-dotenv==1.0.0
+# Phase 4.5 (BUG-15): 10.2.0 cannot install on Python >= 3.12; 11.x supports
+# the full supported interpreter range (3.11 deploy target through 3.13 local dev).
+Pillow==11.1.0
+reportlab==4.1.0
+openpyxl==3.1.2

@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Build output
+.next/
+out/
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+!.env.example
+
+# Logs
+*.log
+server5_err.log
+server5_out.log
+
+# Database files (local development)
+*.sqlite3
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# AI tool temporary files
+.cursor/
+.github/copilot-instructions.md
+
+# Coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Management-v1 old git backup
+management-v1/.git_backup/

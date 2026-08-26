@@ -1,0 +1,24 @@
+{% extends "base_employee.html" %}
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-6">⚙ Warp Details</h1>
+
+<div class="bg-white p-6 rounded shadow border">
+
+    {% if warp %}
+        <p><strong>Start Date:</strong> {{ warp.start_date }}</p>
+        <p><strong>Capacity Sarees:</strong> {{ warp.capacity_sarees }}</p>
+        <p><strong>Remaining Sarees:</strong> {{ warp.remaining_sarees }}</p>
+
+        {% if warp.end_date %}
+            <p class="text-gray-600 mt-3">Warp Completed</p>
+        {% else %}
+            <p class="text-green-600 font-semibold mt-3">Warp Active</p>
+        {% endif %}
+    {% else %}
+        <p>No active warp assigned.</p>
+    {% endif %}
+
+</div>
+
+{% endblock %}

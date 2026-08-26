@@ -1,0 +1,29 @@
+{% extends "base_admin.html" %}
+
+{% block title %}Assign Pagdi{% endblock %}
+{% block header %}Assign Pagdi{% endblock %}
+
+{% block content %}
+<div class="bg-white p-6 rounded shadow max-w-xl">
+  <form method="POST">
+    {% csrf_token %}
+    <label class="block font-semibold mb-1">Employee</label>
+    <select name="employee" class="w-full border p-2 rounded mb-4">
+      {% for e in employees %}
+      <option value="{{ e.id }}">{{ e.name }} — {{ e.phone }}</option>
+      {% endfor %}
+    </select>
+
+    <label class="block font-semibold mb-1">Start Date</label>
+    <input type="date" name="start_date" class="w-full border p-2 rounded mb-4">
+
+    <label class="block font-semibold mb-1">Capacity (sarees)</label>
+    <input type="number" name="capacity_sarees" class="w-full border p-2 rounded mb-4">
+
+    <label class="block font-semibold mb-1">Notes</label>
+    <input type="text" name="notes" class="w-full border p-2 rounded mb-4">
+
+    <button class="bg-green-600 text-white px-4 py-2 rounded">Assign</button>
+  </form>
+</div>
+{% endblock %}

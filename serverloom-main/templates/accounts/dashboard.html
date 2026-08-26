@@ -1,0 +1,58 @@
+{% extends "base_employee.html" %}
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-6">👋 Welcome, {{ employee.name }}</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Personal Details -->
+    <div class="bg-white p-6 rounded-lg shadow border">
+        <h2 class="text-xl font-semibold mb-2">Your Details</h2>
+
+        <p><strong>Phone:</strong> {{ employee.phone }}</p>
+        <p><strong>Salary per Saree:</strong> ₹{{ employee.salary_per_saree }}</p>
+
+        {% if employee.is_approved %}
+            <p><strong>Status:</strong> 
+                <span class="text-green-600 font-bold">Approved</span>
+            </p>
+        {% else %}
+            <p><strong>Status:</strong> 
+                <span class="text-yellow-600 font-bold">Pending</span>
+            </p>
+        {% endif %}
+    </div>
+
+    <!-- Weekly Salary Summary -->
+    <div class="bg-white p-6 rounded-lg shadow border">
+        <h2 class="text-xl font-semibold mb-2">Weekly Summary</h2>
+
+        <p><strong>Week:</strong> {{ week_start }} → {{ week_end }}</p>
+        <p><strong>Sarees Completed:</strong> {{ weekly_sarees }}</p>
+        <p><strong>Advance:</strong> ₹{{ employee.advance_salary }}</p>
+        <p><strong>Final Salary:</strong> ₹{{ final_salary }}</p>
+    </div>
+
+</div>
+
+<!-- Quick Links -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+
+    <a href="{% url 'saree_count' %}"
+       class="bg-white p-6 rounded shadow border hover:bg-gray-100 text-center font-semibold">
+        🧵 Saree Count
+    </a>
+
+    <a href="{% url 'pagdi' %}"
+       class="bg-white p-6 rounded shadow border hover:bg-gray-100 text-center font-semibold">
+        🎯 Pagdi
+    </a>
+
+    <a href="{% url 'warp' %}"
+       class="bg-white p-6 rounded shadow border hover:bg-gray-100 text-center font-semibold">
+        📚 Warp
+    </a>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base_employee.html" %}
+{% block title %}Salary History{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
+    <h2 class="text-2xl font-semibold mb-4">💰 Salary History</h2>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-3 text-left">Week</th>
+                    <th class="p-3 text-left">Sarees</th>
+                    <th class="p-3 text-left">Rate</th>
+                    <th class="p-3 text-left">Advance</th>
+                    <th class="p-3 text-left">Final Salary</th>
+                    <th class="p-3 text-left">Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for h in history %}
+                <tr class="border-t">
+                    <td class="p-3">
+                        {{ h.week_start|date:"M d, Y" }} — {{ h.week_end|date:"M d, Y" }}
+                    </td>
+                    <td class="p-3">{{ h.sarees }}</td>
+                    <td class="p-3">₹{{ h.salary_rate }}</td>
+                    <td class="p-3">₹{{ h.advance_salary }}</td>
+                    <td class="p-3 font-semibold">₹{{ h.final_salary }}</td>
+                    <td class="p-3">
+                        {% if h.paid_status %}
+                          <span class="text-green-600">Paid</span>
+                        {% else %}
+                          <span class="text-red-600">Unpaid</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-3 text-center text-gray-500">
+                        No salary history yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

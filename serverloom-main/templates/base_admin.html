@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{% block title %}Loom Admin Panel{% endblock %}</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind fail-safe (loads fallback if CDN fails) -->
+    <script>
+        (function(){
+            function cssLoaded(){
+                try {
+                    const t = document.createElement('div');
+                    t.className = 'hidden sm:block';
+                    document.documentElement.appendChild(t);
+                    const cs = getComputedStyle(t);
+                    document.documentElement.removeChild(t);
+                    return cs.display === 'none';
+                } catch(e){ return true; }
+            }
+            if(!cssLoaded()){
+                const l = document.createElement('link');
+                l.rel = 'stylesheet';
+                l.href = '/static/css/tailwind-fallback.css';
+                document.head.appendChild(l);
+            }
+        })();
+    </script>
+
+    {% load static %}
+</head>
+
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar"
+           class="w-64 bg-slate-900 text-white flex flex-col fixed inset-y-0 left-0 z-30 transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative shadow-xl"
+           role="navigation" aria-label="Admin Sidebar">
+
+        <div class="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-950">
+            <a href="{% url 'admin_home' %}"
+               class="flex items-center gap-3 font-bold text-xl tracking-wide text-indigo-400 hover:text-indigo-300 transition">
+                🧵 Loom Admin
+            </a>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto no-scrollbar py-4 px-3 space-y-1" tabindex="0">
+
+            <a href="{% url 'admin_home' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Dashboard</a>
+
+            <a href="{% url 'admin_employees' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Employees</a>
+
+            <a href="{% url 'admin_pagdi_list' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Pagdi</a>
+
+            <a href="{% url 'admin_warp_list' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Warp</a>
+
+            <a href="{% url 'admin_saree_entry' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Saree Entry</a>
+
+            <a href="{% url 'admin_weekly_salary' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Weekly Salary</a>
+
+            <a href="{% url 'admin_salary_history' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Salary History</a>
+
+            <a href="{% url 'download_global_history' %}"
+               class="block px-4 py-2 rounded-md hover:bg-slate-800">Download Global History</a>
+
+            <a href="{% url 'logout' %}"
+               class="block px-4 py-2 rounded-md bg-red-700/60 hover:bg-red-700">Logout</a>
+
+        </nav>
+
+    </aside>
+
+    <!-- MAIN AREA -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+
+        <!-- HEADER -->
+        <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-8 shadow-sm z-20" role="banner">
+
+            <!-- Mobile hamburger -->
+            <button id="sidebarToggle"
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+                    class="p-2 rounded-md md:hidden focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+
+            <h2 class="text-2xl font-bold text-slate-800 hidden md:block">{% block header %}{% endblock %}</h2>
+
+            <div class="text-sm font-medium text-slate-500">
+                {% block header_right %}{% endblock %}
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <main class="flex-1 overflow-y-auto p-6 md:p-8">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<!-- TOAST MESSAGES -->
+{% if messages %}
+<div class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full"
+     aria-live="polite" aria-atomic="true" role="status">
+    {% for m in messages %}
+    <div class="animate-fade-in-down flex items-center p-4 rounded-lg shadow-lg border-l-4
+         {% if m.tags == 'success' %}bg-white border-green-500 text-green-700
+         {% elif m.tags == 'error' %}bg-white border-red-500 text-red-700
+         {% else %}bg-white border-blue-500 text-blue-700{% endif %}"
+         role="alert">
+
+        <div class="flex-1 text-sm font-medium">{{ m }}</div>
+
+        <button type="button"
+                class="ml-3 text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 rounded"
+                aria-label="Dismiss notification"
+                onclick="this.closest('[role=alert]').remove()">
+            &times;
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Animations -->
+<style>
+@keyframes fadeInDown {
+    0% { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-down {
+    animation: fadeInDown 0.3s ease-out forwards;
+}
+</style>
+
+<!-- Sidebar Toggle Script -->
+<script>
+(function(){
+    const btn = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    if(!btn || !sidebar) return;
+
+    function openSidebar(){
+        sidebar.classList.remove('-translate-x-full');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+    function closeSidebar(){
+        sidebar.classList.add('-translate-x-full');
+        btn.setAttribute('aria-expanded', 'false');
+    }
+
+    btn.addEventListener('click', () => {
+        const expanded = btn.getAttribute('aria-expanded') === 'true';
+        expanded ? closeSidebar() : openSidebar();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true'){
+            closeSidebar();
+        }
+    });
+})();
+</script>
+
+</body>
+</html>
